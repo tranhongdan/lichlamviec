@@ -13,14 +13,28 @@
         .container { max-width: 1200px; background: white; padding: 30px; margin-top: 20px; margin-bottom: 50px; box-shadow: 0 0 15px rgba(0,0,0,0.1); }
         
         /* Header */
-        .header-top { display: flex; justify-content: space-between; text-align: center; margin-bottom: 20px; font-weight: bold; }
+        .header-top { display: flex; justify-content: space-between; text-align: center; margin-bottom: 10px; font-weight: bold; }
         .header-left h4, .header-right h4 { margin: 0; font-size: 15px; text-transform: uppercase; }
         .header-left h5 { margin: 0; font-size: 14px; font-weight: bold; text-decoration: underline; margin-top: 3px;}
         .header-right h5 { margin: 0; font-size: 14px; font-style: italic; margin-top: 3px; font-weight: normal;}
         
-        .main-title { text-align: center; color: #0d6efd; text-transform: uppercase; font-weight: bold; margin: 25px 0 10px 0; font-size: 22px; }
-        .sub-title { text-align: center; font-size: 16px; font-style: italic; margin-bottom: 20px; }
+        /* Tiêu đề chính */
+        .main-title { text-align: center; color: #0d6efd; text-transform: uppercase; font-weight: bold; margin: 20px 0 10px 0; font-size: 24px; }
         
+        /* Khu vực điều khiển ngày (Mới) */
+        .date-control-area {
+            text-align: center;
+            margin-bottom: 20px;
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 50px;
+            display: inline-block;
+            border: 1px solid #dee2e6;
+            position: relative;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
         /* Table */
         .schedule-table { width: 100%; border-collapse: collapse; border: 1px solid black; }
         .schedule-table th, .schedule-table td { border: 1px solid black; padding: 8px; vertical-align: top; font-size: 15px; }
@@ -29,7 +43,6 @@
         .col-thu { color: #0056b3; }
         
         .general-task { color: red; font-weight: bold; text-align: center; text-transform: uppercase; padding: 8px; background-color: #fff3cd; }
-        
         .task-item { margin-bottom: 8px; border-bottom: 1px dashed #ccc; padding-bottom: 5px; }
         .task-item:last-child { border-bottom: none; }
         .task-time { font-weight: bold; color: #333; margin-right: 5px; }
@@ -41,15 +54,24 @@
 
         .footer-copyright { margin-top: 30px; text-align: center; font-size: 13px; color: #666; border-top: 1px solid #eee; padding-top: 15px; }
         
+        /* Nút công cụ góc phải */
+        .tool-buttons { position: absolute; top: 30px; right: 30px; }
+
         @media print {
             .no-print { display: none !important; }
             .container { box-shadow: none; margin: 0; padding: 0; max-width: 100%; width: 100%; }
+            .tool-buttons { display: none; }
         }
     </style>
 </head>
 <body>
 
-<div class="container">
+<div class="container position-relative">
+    <div class="tool-buttons no-print">
+        <button class="btn btn-sm btn-outline-secondary me-1" onclick="window.print()" title="In lịch"><i class="fas fa-print"></i></button>
+        <button class="btn btn-sm btn-outline-danger" onclick="toggleAdmin()" title="Quản trị"><i class="fas fa-user-cog"></i></button>
+    </div>
+
     <div class="header-top">
         <div class="header-left">
             <h4>SỞ GIÁO DỤC VÀ ĐÀO TẠO ĐẮK LẮK</h4>
@@ -61,18 +83,14 @@
         </div>
     </div>
 
-    <div class="row mb-4 no-print align-items-end p-3 bg-light rounded border">
-        <div class="col-md-4">
-            <label class="form-label fw-bold">Chọn ngày xem:</label>
-            <input type="date" id="viewDate" class="form-control">
+    <h2 class="main-title">LỊCH LÀM VIỆC</h2>
+
+    <div class="no-print" style="text-align: center;">
+        <div class="date-control-area">
+            <label class="fw-bold me-2"><i class="far fa-calendar-alt"></i> Xem từ ngày:</label>
+            <input type="date" id="viewDate" class="form-control d-inline-block" style="width: auto;" onchange="loadSchedule()">
         </div>
-        <div class="col-md-4 d-flex gap-2">
-            <button class="btn btn-primary" onclick="loadSchedule()"><i class="fas fa-search"></i> Xem</button>
-            <button class="btn btn-secondary" onclick="window.print()"><i class="fas fa-print"></i> In</button>
-        </div>
-        <div class="col-md-4 text-end">
-            <button class="btn btn-danger" onclick="toggleAdmin()"><i class="fas fa-user-cog"></i> Quản trị</button>
-        </div>
+        <div id="scheduleDateRange" class="text-muted fst-italic mb-3"></div>
     </div>
 
     <div id="adminPanel">
@@ -119,8 +137,7 @@
 
         <div id="tabExcel" style="display: none;">
             <div class="alert alert-info">
-                <i class="fas fa-info-circle"></i> File Excel cần có cột Ngày định dạng: <b>dd/mm/yyyy</b> (Ví dụ: 16/02/2026). <br>
-                Hệ thống sẽ đọc chính xác những gì bạn nhìn thấy trên file Excel.
+                <i class="fas fa-info-circle"></i> File Excel cần có cột Ngày định dạng: <b>dd/mm/yyyy</b> (Ví dụ: 16/02/2026).
             </div>
             <div class="row align-items-end">
                 <div class="col-md-4">
@@ -140,9 +157,6 @@
             </div>
         </div>
     </div>
-
-    <h2 class="main-title">LỊCH LÀM VIỆC</h2>
-    <div class="sub-title" id="scheduleDateRange"></div>
 
     <table class="schedule-table">
         <thead>
@@ -176,32 +190,23 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    // --- HÀM XỬ LÝ NGÀY (QUAN TRỌNG ĐÃ SỬA) ---
+    // --- HÀM HỖ TRỢ ---
     function normalizeDate(input) {
         if (!input) return "";
         let str = input.toString().trim();
-        
-        // Trường hợp 1: Chuỗi "dd/mm/yyyy" (VD: 16/02/2026) -> Chuyển thành YYYY-MM-DD
         if (str.includes('/')) {
             const parts = str.split('/');
             if (parts.length === 3) {
-                let d = parts[0].padStart(2, '0');
-                let m = parts[1].padStart(2, '0');
-                let y = parts[2];
-                if (y.length === 2) y = "20" + y; // Xử lý nhập tắt năm 26 -> 2026
+                let d = parts[0].padStart(2, '0'), m = parts[1].padStart(2, '0'), y = parts[2];
+                if (y.length === 2) y = "20" + y;
                 return `${y}-${m}-${d}`;
             }
         }
-        
-        // Trường hợp 2: Chuỗi "yyyy-mm-dd" -> Giữ nguyên
         if (str.includes('-') && str.length >= 10) return str;
-
-        // Trường hợp 3: Số sê-ri (Dự phòng, nhưng code mới sẽ ưu tiên đọc chuỗi)
         if (!isNaN(str) && str.length < 8) {
              const date = new Date(Math.round((input - 25569) * 86400 * 1000));
              return date.toISOString().split('T')[0];
         }
-
         return "";
     }
 
@@ -215,12 +220,15 @@
     }
 
     function smartSort(a, b) { return convertToMinutes(a.time) - convertToMinutes(b.time); }
+    
+    // Hàm tìm Thứ 2 của tuần hiện tại (Dùng cho mặc định ban đầu)
     function getMonday(d) {
         d = new Date(d);
         var day = d.getDay();
         var diff = d.getDate() - day + (day == 0 ? -6 : 1);
         return new Date(d.setDate(diff));
     }
+    
     function getDayName(i) { return ["Chủ Nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"][i]; }
 
     // --- LOGIC GIAO DIỆN ---
@@ -251,13 +259,12 @@
         .then(() => { alert("Đã lưu!"); document.getElementById("inputContent").value = ""; });
     };
 
-    // --- XỬ LÝ EXCEL (ĐÃ SỬA: CHẾ ĐỘ RAW) ---
+    // --- XỬ LÝ EXCEL ---
     window.downloadSample = function() {
         const ws_data = [
             ["Ngay (dd/mm/yyyy)", "Buoi", "Gio", "NoiDung", "NguoiThucHien"],
             ["16/02/2026", "Sáng", "07:00", "Chào cờ đầu tuần", "BGH"],
-            ["17/02/2026", "Chiều", "14:00", "Họp chuyên môn", "Tổ Toán"],
-            ["18/02/2026", "Sáng", "", "Dạy theo TKB", "GVCN"]
+            ["17/02/2026", "Chiều", "14:00", "Họp chuyên môn", "Tổ Toán"]
         ];
         const ws = XLSX.utils.aoa_to_sheet(ws_data);
         const wb = XLSX.utils.book_new();
@@ -273,22 +280,14 @@
         reader.onload = function(e) {
             const data = new Uint8Array(e.target.result);
             const workbook = XLSX.read(data, {type: 'array'});
-            
-            // QUAN TRỌNG: raw: false ĐỂ ĐỌC CHÍNH XÁC NHỮNG GÌ MẮT THẤY (STRING)
-            const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {
-                header: 1,
-                raw: false, 
-                dateNF: "dd/mm/yyyy" 
-            });
+            const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1, raw: false, dateNF: "dd/mm/yyyy" });
 
             let count = 0;
             for(let i = 1; i < jsonData.length; i++) {
                 let row = jsonData[i];
                 if(!row[0] || !row[3]) continue;
-
-                // Chuẩn hóa ngày
                 let dateStr = normalizeDate(row[0]);
-                if (!dateStr) continue; // Nếu ngày lỗi thì bỏ qua
+                if (!dateStr) continue;
                 
                 push(ref(db, 'schedules'), {
                     date: dateStr,
@@ -305,10 +304,13 @@
         reader.readAsArrayBuffer(fileInput.files[0]);
     };
 
+    // --- HIỂN THỊ LỊCH (LOGIC MỚI) ---
     window.loadSchedule = function() {
         const viewDateStr = document.getElementById("viewDate").value;
         if(!viewDateStr) return;
-        const mondayDate = getMonday(new Date(viewDateStr));
+        
+        // Logic mới: Bắt đầu từ ngày được chọn (không ép về thứ 2)
+        const startDate = new Date(viewDateStr);
         
         onValue(ref(db, 'schedules'), (snapshot) => {
             const allData = [];
@@ -316,13 +318,10 @@
 
             let html = "";
             for (let i = 0; i < 7; i++) {
-                let currDate = new Date(mondayDate);
-                currDate.setDate(mondayDate.getDate() + i);
+                let currDate = new Date(startDate);
+                currDate.setDate(startDate.getDate() + i);
                 
-                // Tạo chuỗi ngày chuẩn để so sánh
-                let yyyy = currDate.getFullYear();
-                let mm = String(currDate.getMonth()+1).padStart(2,'0');
-                let dd = String(currDate.getDate()).padStart(2,'0');
+                let yyyy = currDate.getFullYear(), mm = String(currDate.getMonth()+1).padStart(2,'0'), dd = String(currDate.getDate()).padStart(2,'0');
                 let dateKey = `${yyyy}-${mm}-${dd}`;
                 
                 let tasks = allData.filter(t => t.date === dateKey);
@@ -336,8 +335,9 @@
             }
             document.getElementById("scheduleBody").innerHTML = html;
             
-            let sundayDate = new Date(mondayDate); sundayDate.setDate(mondayDate.getDate() + 6);
-            document.getElementById("scheduleDateRange").innerText = `(Từ ngày ${mondayDate.getDate()}/${mondayDate.getMonth()+1}/${mondayDate.getFullYear()} đến ngày ${sundayDate.getDate()}/${sundayDate.getMonth()+1}/${sundayDate.getFullYear()})`;
+            // Cập nhật dòng chữ hiển thị ngày
+            let endDate = new Date(startDate); endDate.setDate(startDate.getDate() + 6);
+            document.getElementById("scheduleDateRange").innerText = `(Từ ngày ${startDate.getDate()}/${startDate.getMonth()+1}/${startDate.getFullYear()} đến ngày ${endDate.getDate()}/${endDate.getMonth()+1}/${endDate.getFullYear()})`;
         });
     };
 
@@ -345,7 +345,9 @@
         return tasks.map(t => `<div class="task-item">${t.time?`<span class="task-time">${t.time}:</span>`:""} ${t.content} ${t.person?`<span class="task-person">(${t.person})</span>`:""}</div>`).join("");
     }
 
+    // KHỞI ĐỘNG: MẶC ĐỊNH LÀ THỨ 2 CỦA TUẦN HIỆN TẠI
     document.getElementById("viewDate").valueAsDate = getMonday(new Date());
+    // Lưu ý: Ta set value cho input là Thứ 2, hàm loadSchedule sẽ lấy giá trị đó để chạy
     loadSchedule();
 </script>
 
