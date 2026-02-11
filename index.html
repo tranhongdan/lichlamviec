@@ -12,21 +12,40 @@
         body { font-family: 'Times New Roman', Times, serif; background-color: #f4f6f9; color: #000; }
         .container { max-width: 1200px; background: white; padding: 40px 30px; margin-top: 20px; margin-bottom: 50px; box-shadow: 0 0 15px rgba(0,0,0,0.1); }
         
-        .header-top { display: flex; justify-content: space-between; text-align: center; margin-bottom: 10px; font-weight: bold; }
-        .header-left h4, .header-right h4 { margin: 0; font-size: 15px; text-transform: uppercase; }
-        .header-left h5 { margin: 0; font-size: 14px; font-weight: bold; text-decoration: underline; margin-top: 3px;}
-        .header-right h5 { margin: 0; font-size: 14px; font-style: italic; margin-top: 3px; font-weight: normal;}
+        /* --- HEADER CHUẨN QUỐC HIỆU TIÊU NGỮ (ĐÃ SỬA) --- */
+        .header-top { display: flex; justify-content: space-between; text-align: center; margin-bottom: 15px; }
         
-        .main-title { text-align: center; color: #0d6efd; text-transform: uppercase; font-weight: bold; margin: 20px 0 5px 0; font-size: 24px; }
+        /* Bên trái: Sở & Trường */
+        .header-left h4 { margin: 0; font-size: 15px; text-transform: uppercase; font-weight: normal; }
+        .header-left h5 { margin: 0; font-size: 15px; font-weight: bold; text-decoration: underline; margin-top: 5px;}
+        
+        /* Bên phải: Quốc hiệu & Tiêu ngữ */
+        .header-right h4 { 
+            margin: 0; 
+            font-size: 15px; 
+            text-transform: uppercase; 
+            font-weight: bold; /* In đậm */
+        }
+        .header-right h5 { 
+            margin: 0; 
+            font-size: 15px; 
+            font-weight: bold; /* In đậm */
+            font-style: normal; /* Không in nghiêng */
+            margin-top: 5px; 
+        }
+        
+        /* Tiêu đề Lịch */
+        .main-title { text-align: center; color: #0d6efd; text-transform: uppercase; font-weight: bold; margin: 25px 0 5px 0; font-size: 24px; }
         .date-range-display { text-align: center; font-style: italic; margin-bottom: 20px; font-size: 16px; color: #333; }
 
+        /* Bảng */
         .schedule-table { width: 100%; border-collapse: collapse; border: 1px solid black; }
         .schedule-table th, .schedule-table td { border: 1px solid black; padding: 8px; vertical-align: top; font-size: 15px; }
         .schedule-table thead th { background-color: #d1e7dd; text-align: center; vertical-align: middle; font-weight: bold; text-transform: uppercase; }
         .col-thu, .col-ngay { width: 10%; text-align: center; vertical-align: middle !important; font-weight: bold; }
         .col-thu { color: #0056b3; }
         
-        /* CÔNG VIỆC CHUNG (Sửa được) */
+        /* Công việc chung */
         .general-task { 
             color: red; 
             font-weight: bold; 
@@ -55,6 +74,7 @@
             .no-print { display: none !important; }
             .container { box-shadow: none; margin: 0; padding: 0; max-width: 100%; width: 100%; }
             .col-thu { color: black; }
+            .main-title { color: black; }
         }
     </style>
 </head>
@@ -132,7 +152,7 @@
 
         <div id="tabExcel" style="display: none;">
             <div class="alert alert-info">
-                <i class="fas fa-info-circle"></i> Hệ thống đã nâng cấp để đọc được cả <b>Ngày dạng Chữ</b> và <b>Ngày dạng Số</b> trong Excel.
+                <i class="fas fa-info-circle"></i> Đọc được cả <b>Ngày dạng Chữ</b> và <b>Ngày dạng Số</b> trong Excel.
             </div>
             <div class="row align-items-end">
                 <div class="col-md-4"><button class="btn btn-outline-primary w-100" onclick="downloadSample()"><i class="fas fa-download"></i> Tải File Mẫu</button></div>
@@ -165,13 +185,12 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    // --- HÀM XỬ LÝ NGÀY "SIÊU MẠNH" (KHẮC PHỤC LỖI CỦA BẠN) ---
+    // --- HÀM XỬ LÝ NGÀY ---
     function normalizeDate(input) {
         if (input === undefined || input === null || input === "") return "";
         
-        // 1. NẾU LÀ SỐ (Excel lưu ngày dạng số serial, ví dụ: 45068)
+        // 1. NẾU LÀ SỐ (Excel Serial Date)
         if (typeof input === 'number') {
-            // Dùng thư viện SheetJS để dịch ngược ra ngày tháng -> Chính xác tuyệt đối
             const dateInfo = window.XLSX.SSF.parse_date_code(input);
             if (dateInfo) {
                 let y = dateInfo.y;
@@ -181,7 +200,7 @@
             }
         }
         
-        // 2. NẾU LÀ CHỮ (Dạng "16/02/2026")
+        // 2. NẾU LÀ CHỮ
         let str = input.toString().trim();
         if (str.includes('/')) {
             const parts = str.split('/');
@@ -189,15 +208,11 @@
                 let d = parts[0].padStart(2, '0');
                 let m = parts[1].padStart(2, '0');
                 let y = parts[2];
-                // Xử lý năm viết tắt (26 -> 2026)
                 if (y.length === 2) y = "20" + y;
                 return `${y}-${m}-${d}`;
             }
         }
-        
-        // 3. NẾU ĐÃ LÀ DẠNG CHUẨN (yyyy-mm-dd)
         if (str.includes('-') && str.length >= 10) return str;
-        
         return "";
     }
 
@@ -236,7 +251,6 @@
     };
 
     // --- LOGIC DỮ LIỆU ---
-    // Load công việc chung
     onValue(ref(db, 'generalTask'), (snapshot) => {
         const val = snapshot.val();
         document.getElementById("displayGeneralTask").innerText = val ? val : "CÔNG VIỆC CHUNG: DẠY VÀ HỌC THEO THỜI KHÓA BIỂU";
@@ -271,7 +285,7 @@
         XLSX.writeFile(wb, "Mau_Lich_Cong_Tac.xlsx");
     };
 
-    // --- HÀM NHẬP EXCEL (QUAN TRỌNG: RAW=TRUE) ---
+    // --- HÀM NHẬP EXCEL ---
     window.processExcel = function() {
         const fileInput = document.getElementById('excelFile');
         if(!fileInput.files.length) { alert("Chưa chọn file!"); return; }
@@ -280,16 +294,13 @@
             const data = new Uint8Array(e.target.result);
             const workbook = XLSX.read(data, {type: 'array'});
             
-            // raw: true -> Giữ nguyên dữ liệu gốc để ta tự xử lý
+            // raw: true -> Giữ nguyên dữ liệu gốc
             const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1, raw: true });
             
             let count = 0;
-            // Bắt đầu từ dòng 1 (dòng 0 là tiêu đề)
             for(let i = 1; i < jsonData.length; i++) {
                 let row = jsonData[i];
-                // normalizeDate giờ đây xử lý được cả số và chữ
                 let dateStr = normalizeDate(row[0]); 
-                
                 if(!dateStr || !row[3]) continue; 
 
                 push(ref(db, 'schedules'), {
