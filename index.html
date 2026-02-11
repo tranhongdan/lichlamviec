@@ -12,54 +12,40 @@
         body { font-family: 'Times New Roman', Times, serif; background-color: #f4f6f9; color: #000; }
         .container { max-width: 1200px; background: white; padding: 40px 30px; margin-top: 20px; margin-bottom: 50px; box-shadow: 0 0 15px rgba(0,0,0,0.1); }
         
-        /* --- HEADER --- */
+        /* HEADER */
         .header-top { display: flex; justify-content: space-between; text-align: center; margin-bottom: 15px; }
         .header-left h4 { margin: 0; font-size: 15px; text-transform: uppercase; font-weight: normal; }
         .header-left h5 { margin: 0; font-size: 15px; font-weight: bold; text-decoration: underline; margin-top: 5px;}
         .header-right h4 { margin: 0; font-size: 15px; text-transform: uppercase; font-weight: bold; }
         .header-right h5 { margin: 0; font-size: 15px; font-weight: bold; font-style: normal; margin-top: 5px; }
         
-        /* Tiêu đề Lịch */
         .main-title { text-align: center; color: #0d6efd; text-transform: uppercase; font-weight: bold; margin: 25px 0 5px 0; font-size: 24px; }
         .date-range-display { text-align: center; font-style: italic; margin-bottom: 20px; font-size: 16px; color: #333; }
 
-        /* Bảng */
+        /* TABLE */
         .schedule-table { width: 100%; border-collapse: collapse; border: 1px solid black; }
         .schedule-table th, .schedule-table td { border: 1px solid black; padding: 8px; vertical-align: top; font-size: 15px; }
         .schedule-table thead th { background-color: #d1e7dd; text-align: center; vertical-align: middle; font-weight: bold; text-transform: uppercase; }
         .col-thu, .col-ngay { width: 10%; text-align: center; vertical-align: middle !important; font-weight: bold; }
         .col-thu { color: #0056b3; }
         
-        /* Công việc chung */
-        .general-task { 
-            color: red; 
-            font-weight: bold; 
-            text-align: center; 
-            text-transform: uppercase; 
-            padding: 10px; 
-            background-color: #fff3cd;
-            font-size: 16px;
-        }
+        .general-task { color: red; font-weight: bold; text-align: center; text-transform: uppercase; padding: 10px; background-color: #fff3cd; font-size: 16px; }
 
         .task-item { margin-bottom: 8px; border-bottom: 1px dashed #ccc; padding-bottom: 5px; }
         .task-item:last-child { border-bottom: none; }
         .task-time { font-weight: bold; color: #333; margin-right: 5px; }
         .task-person { font-style: italic; color: #555; display: block; font-size: 0.9em; margin-top: 2px;}
 
-        /* Control Bar */
+        /* ADMIN & CONTROL */
         .control-bar { margin-top: 30px; padding: 20px; background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; }
-        
-        /* Admin Panel */
         #adminPanel { display: none; background: #fff; padding: 20px; border: 2px dashed #0d6efd; border-radius: 10px; margin-top: 20px; }
         .nav-tabs .nav-link.active { font-weight: bold; color: #0d6efd; border-bottom: 3px solid #0d6efd; }
-
+        
         .footer-copyright { margin-top: 30px; text-align: center; font-size: 13px; color: #666; border-top: 1px solid #eee; padding-top: 15px; }
         
         @media print {
             .no-print { display: none !important; }
             .container { box-shadow: none; margin: 0; padding: 0; max-width: 100%; width: 100%; }
-            .col-thu { color: black; }
-            .main-title { color: black; }
         }
     </style>
 </head>
@@ -83,7 +69,7 @@
     <table class="schedule-table">
         <thead>
             <tr><th>THỨ</th><th>NGÀY</th><th style="width: 40%;">BUỔI SÁNG</th><th style="width: 40%;">BUỔI CHIỀU</th></tr>
-            <tr><td colspan="4" class="general-task" id="displayGeneralTask">Đang tải công việc chung...</td></tr>
+            <tr><td colspan="4" class="general-task" id="displayGeneralTask">Loading...</td></tr>
         </thead>
         <tbody id="scheduleBody"><tr><td colspan="4" class="text-center p-3">Đang tải dữ liệu...</td></tr></tbody>
     </table>
@@ -111,16 +97,16 @@
 
         <ul class="nav nav-tabs mb-3">
             <li class="nav-item"><button class="nav-link active" onclick="switchTab('general')">1. Công Việc Chung</button></li>
-            <li class="nav-item"><button class="nav-link" onclick="switchTab('manual')">2. Nhập Lịch (Thủ Công)</button></li>
-            <li class="nav-item"><button class="nav-link" onclick="switchTab('excel')">3. Nhập Lịch (Excel)</button></li>
+            <li class="nav-item"><button class="nav-link" onclick="switchTab('manual')">2. Nhập Thủ Công</button></li>
+            <li class="nav-item"><button class="nav-link" onclick="switchTab('excel')">3. Nhập Excel</button></li>
+            <li class="nav-item"><button class="nav-link text-danger" onclick="switchTab('reset')">4. Xóa Dữ Liệu</button></li>
         </ul>
 
         <div id="tabGeneral">
-            <div class="alert alert-warning"><i class="fas fa-bullhorn"></i> Dòng chữ đỏ dưới tiêu đề.</div>
             <div class="input-group">
                 <span class="input-group-text fw-bold">Nội dung:</span>
-                <input type="text" id="inputGeneralTask" class="form-control" placeholder="Nhập nội dung...">
-                <button class="btn btn-warning fw-bold" onclick="saveGeneralTask()">Lưu Thay Đổi</button>
+                <input type="text" id="inputGeneralTask" class="form-control">
+                <button class="btn btn-warning fw-bold" onclick="saveGeneralTask()">Lưu</button>
             </div>
         </div>
 
@@ -136,13 +122,19 @@
         </div>
 
         <div id="tabExcel" style="display: none;">
-            <div class="alert alert-info">
-                <i class="fas fa-info-circle"></i> File Excel cần có thứ tự cột: <b>Ngày | Buổi | Giờ | Nội Dung | Người Thực Hiện</b>
-            </div>
+            <div class="alert alert-info py-2"><i class="fas fa-info-circle"></i> File Excel cần đúng thứ tự cột: Ngày | Buổi | Giờ | Nội Dung | Người Thực Hiện</div>
             <div class="row align-items-end">
                 <div class="col-md-4"><button class="btn btn-outline-primary w-100" onclick="downloadSample()"><i class="fas fa-download"></i> Tải File Mẫu</button></div>
-                <div class="col-md-6"><label class="fw-bold">Chọn file Excel:</label><input type="file" id="excelFile" class="form-control" accept=".xlsx, .xls"></div>
+                <div class="col-md-6"><input type="file" id="excelFile" class="form-control" accept=".xlsx, .xls"></div>
                 <div class="col-md-2"><button class="btn btn-success w-100" onclick="processExcel()"><i class="fas fa-upload"></i> Nhập</button></div>
+            </div>
+        </div>
+
+        <div id="tabReset" style="display: none; text-align: center;">
+            <div class="alert alert-danger">
+                <h5 class="fw-bold"><i class="fas fa-exclamation-triangle"></i> CẢNH BÁO QUAN TRỌNG</h5>
+                <p>Hành động này sẽ xóa toàn bộ lịch công tác hiện có trên hệ thống.</p>
+                <button class="btn btn-danger btn-lg" onclick="clearAllData()"><i class="fas fa-trash"></i> XÓA SẠCH DỮ LIỆU CŨ</button>
             </div>
         </div>
     </div>
@@ -155,7 +147,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-    import { getDatabase, ref, push, set, onValue } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+    import { getDatabase, ref, push, set, remove, onValue } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyBZ7HZoLwwIO5P42Ywy_E39bxQArDQaPMo",
@@ -170,15 +162,14 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    // --- HÀM XỬ LÝ DATE (ĐÃ NÂNG CẤP MAX LEVEL) ---
+    // --- HÀM XỬ LÝ DATE (SIÊU CHUẨN) ---
     function normalizeDate(input) {
-        if (input === undefined || input === null || input === "") return "";
+        if (!input) return "";
+        let str = input.toString().trim();
         
-        // 1. Số Excel (Serial Date)
-        if (typeof input === 'number') {
-            // Làm tròn để tránh lỗi số thập phân 45337.000001
-            let serial = Math.floor(input);
-            const dateInfo = window.XLSX.SSF.parse_date_code(serial);
+        // Excel Serial Date
+        if (typeof input === 'number' || !isNaN(input)) {
+            const dateInfo = window.XLSX.SSF.parse_date_code(input);
             if (dateInfo) {
                 let y = dateInfo.y;
                 let m = String(dateInfo.m).padStart(2, '0');
@@ -187,72 +178,51 @@
             }
         }
         
-        // 2. Chuỗi Text
-        let str = input.toString().trim();
-        // Cắt bỏ các ký tự ẩn (nếu có)
-        str = str.replace(/[\u200B-\u200D\uFEFF]/g, '');
-
+        // Text dd/mm/yyyy
         if (str.includes('/')) {
             const parts = str.split('/');
-            if (parts.length === 3) {
+            if (parts.length >= 2) {
                 let d = parts[0].trim().padStart(2, '0');
                 let m = parts[1].trim().padStart(2, '0');
-                let y = parts[2].trim();
-                // Nếu năm chỉ có 2 số (ví dụ 26) -> 2026
+                let y = (parts[2] || new Date().getFullYear()).toString().trim();
                 if (y.length === 2) y = "20" + y; 
                 return `${y}-${m}-${d}`;
             }
         }
-        if (str.includes('-')) {
-            const parts = str.split('-');
-            if (parts.length === 3) { 
-                 let d = parts[0].trim().padStart(2, '0');
-                 let m = parts[1].trim().padStart(2, '0');
-                 let y = parts[2].trim();
-                 if(parts[0].length === 4) return str; // Đã là yyyy-mm-dd
-                 return `${y}-${m}-${d}`; // dd-mm-yyyy
-            }
-        }
+        
+        // Text yyyy-mm-dd
+        if (str.match(/^\d{4}-\d{2}-\d{2}$/)) return str;
+
         return "";
     }
 
     // --- HÀM CHUẨN HÓA BUỔI ---
-    function normalizeSession(str) {
-        if(!str) return "Sáng"; // Mặc định là Sáng nếu ô trống
-        let s = str.toString().toLowerCase().trim();
-        // Tìm mọi dấu hiệu của buổi chiều
-        if(s.includes("ch") || s === "c" || s.includes("chi")) return "Chiều";
+    function getSessionType(str) {
+        if (!str) return "Sáng";
+        let s = str.toString().toLowerCase().trim().normalize('NFC');
+        if (s.includes("chi") || s.includes("ch") || s === "c") return "Chiều";
         return "Sáng";
     }
 
     function convertToMinutes(timeStr) {
-        if (!timeStr || typeof timeStr !== 'string' || timeStr.trim() === "") return 9999;
-        let numbers = timeStr.match(/\d+/g);
+        if (!timeStr) return 9999;
+        let numbers = timeStr.toString().match(/\d+/g);
         if (!numbers) return 9999;
-        let h = parseInt(numbers[0]);
-        let m = numbers[1] ? parseInt(numbers[1]) : 0;
-        return h * 60 + m;
-    }
-
-    function smartSort(a, b) { 
-        return convertToMinutes(a.time) - convertToMinutes(b.time); 
+        return parseInt(numbers[0]) * 60 + (numbers[1] ? parseInt(numbers[1]) : 0);
     }
 
     function getMonday(d) {
         d = new Date(d);
-        var day = d.getDay();
-        var diff = d.getDate() - day + (day == 0 ? -6 : 1);
+        var day = d.getDay(), diff = d.getDate() - day + (day == 0 ? -6 : 1);
         return new Date(d.setDate(diff));
     }
     
     function getDayName(i) { return ["Chủ Nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"][i]; }
 
-    // --- LOGIC UI ---
+    // --- UI LOGIC ---
     window.switchTab = function(tabName) {
         document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
-        document.getElementById('tabGeneral').style.display = 'none';
-        document.getElementById('tabManual').style.display = 'none';
-        document.getElementById('tabExcel').style.display = 'none';
+        document.querySelectorAll('[id^="tab"]').forEach(el => el.style.display = 'none');
         document.getElementById('tab' + tabName.charAt(0).toUpperCase() + tabName.slice(1)).style.display = 'block';
         event.target.classList.add('active');
     }
@@ -264,17 +234,15 @@
         } else { alert("Sai mật khẩu!"); }
     };
 
-    // --- LOGIC DỮ LIỆU ---
-    onValue(ref(db, 'generalTask'), (snapshot) => {
-        const val = snapshot.val();
-        document.getElementById("displayGeneralTask").innerText = val ? val : "CÔNG VIỆC CHUNG: DẠY VÀ HỌC THEO THỜI KHÓA BIỂU";
-        document.getElementById("inputGeneralTask").value = val ? val : "";
+    // --- FIREBASE LOGIC ---
+    onValue(ref(db, 'generalTask'), (snap) => {
+        document.getElementById("displayGeneralTask").innerText = snap.val() || "CÔNG VIỆC CHUNG: DẠY VÀ HỌC THEO THỜI KHÓA BIỂU";
+        document.getElementById("inputGeneralTask").value = snap.val() || "";
     });
 
     window.saveGeneralTask = function() {
-        const content = document.getElementById("inputGeneralTask").value;
-        if (!content) { alert("Không được để trống!"); return; }
-        set(ref(db, 'generalTask'), content).then(() => { alert("Đã cập nhật!"); });
+        set(ref(db, 'generalTask'), document.getElementById("inputGeneralTask").value)
+            .then(() => alert("Đã lưu công việc chung!"));
     }
 
     window.addSchedule = function() {
@@ -288,15 +256,20 @@
         
         push(ref(db, 'schedules'), { 
             date, 
-            session: normalizeSession(session),
-            time, 
-            content: content.trim(), 
-            person 
-        }).then(() => { 
-            alert("Đã lưu!"); 
-            document.getElementById("inputContent").value = ""; 
-        });
+            session: getSessionType(session), // Lưu cứng Sáng/Chiều
+            time, content: content.trim(), person 
+        }).then(() => { alert("Đã lưu!"); document.getElementById("inputContent").value = ""; });
     };
+
+    // --- TÍNH NĂNG MỚI: XÓA SẠCH DỮ LIỆU ---
+    window.clearAllData = function() {
+        if(confirm("Bạn có chắc chắn muốn XÓA TOÀN BỘ lịch không? Dữ liệu sẽ mất vĩnh viễn!")) {
+            remove(ref(db, 'schedules')).then(() => {
+                alert("Đã xóa sạch dữ liệu cũ. Hãy nhập lại file Excel!");
+                document.getElementById("scheduleBody").innerHTML = `<tr><td colspan="4" class="text-center p-3">Chưa có dữ liệu</td></tr>`;
+            }).catch(e => alert("Lỗi: " + e.message));
+        }
+    }
 
     window.downloadSample = function() {
         const ws_data = [
@@ -310,7 +283,6 @@
         XLSX.writeFile(wb, "Mau_Lich_Cong_Tac.xlsx");
     };
 
-    // --- HÀM NHẬP EXCEL (SIÊU BỀN) ---
     window.processExcel = function() {
         const fileInput = document.getElementById('excelFile');
         if(!fileInput.files.length) { alert("Chưa chọn file!"); return; }
@@ -320,55 +292,40 @@
             try {
                 const data = new Uint8Array(e.target.result);
                 const workbook = XLSX.read(data, {type: 'array'});
-                
-                // defval: "" -> Giữ các ô trống là chuỗi rỗng thay vì null/undefined để không lỗi vòng lặp
                 const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1, raw: true, defval: "" });
                 
-                let successCount = 0;
-                let failCount = 0;
-                let logMsg = "";
+                let success = 0, firstDateFound = "";
 
-                // Bắt đầu từ dòng 1
                 for(let i = 1; i < jsonData.length; i++) {
                     let row = jsonData[i];
-                    
-                    // Nếu dòng hoàn toàn trống thì bỏ qua
-                    if(row.length === 0 || (!row[0] && !row[3])) continue;
+                    if(!row[0] && !row[3]) continue;
 
                     let dateStr = normalizeDate(row[0]);
                     let contentRaw = row[3] ? row[3].toString().trim() : "";
                     
-                    if(!dateStr || contentRaw === "") {
-                        failCount++; // Có dữ liệu nhưng sai định dạng
-                        continue; 
+                    if(dateStr && contentRaw) {
+                        push(ref(db, 'schedules'), {
+                            date: dateStr, 
+                            session: getSessionType(row[1]),
+                            time: row[2] ? row[2].toString().trim() : "", 
+                            content: contentRaw, 
+                            person: row[4] ? row[4].toString().trim() : ""
+                        });
+                        success++;
+                        if(!firstDateFound) firstDateFound = dateStr;
                     }
-
-                    // Xử lý Buổi - Cho phép nhận diện lỏng lẻo
-                    let sessionRaw = row[1];
-                    let sessionFinal = normalizeSession(sessionRaw);
-
-                    let timeStr = row[2] ? row[2].toString().trim() : "";
-                    let personStr = row[4] ? row[4].toString().trim() : "";
-
-                    push(ref(db, 'schedules'), {
-                        date: dateStr, 
-                        session: sessionFinal, 
-                        time: timeStr, 
-                        content: contentRaw, 
-                        person: personStr
-                    });
-                    successCount++;
                 }
                 
-                let finalMsg = `Kết quả nhập file:\n- Thành công: ${successCount} công việc.\n`;
-                if(failCount > 0) finalMsg += `- Bỏ qua: ${failCount} dòng bị lỗi hoặc thiếu ngày/nội dung.`;
-                alert(finalMsg);
+                alert(`Đã nhập thành công ${success} công việc!`);
                 fileInput.value = "";
+                
+                // Tự động nhảy đến ngày vừa nhập
+                if(firstDateFound) {
+                    document.getElementById("viewDate").value = firstDateFound;
+                    loadSchedule();
+                }
 
-            } catch (err) {
-                alert("Lỗi khi đọc file: " + err.message);
-                console.error(err);
-            }
+            } catch (err) { alert("Lỗi đọc file: " + err.message); }
         };
         reader.readAsArrayBuffer(fileInput.files[0]);
     };
@@ -377,7 +334,6 @@
         const viewDateStr = document.getElementById("viewDate").value;
         if(!viewDateStr) return;
         
-        // Tách chuỗi yyyy-mm-dd thủ công để tránh lệch múi giờ
         const [vY, vM, vD] = viewDateStr.split("-").map(Number);
         const startDateObj = new Date(vY, vM - 1, vD); 
         
@@ -395,56 +351,34 @@
                 let yyyy = currDate.getFullYear();
                 let mm = String(currDate.getMonth()+1).padStart(2,'0');
                 let dd = String(currDate.getDate()).padStart(2,'0');
-                
                 let dateKey = `${yyyy}-${mm}-${dd}`;
                 
-                // Lọc dữ liệu theo ngày
-                let tasks = allData.filter(t => t.date === dateKey);
+                // LỌC DỮ LIỆU: Cho phép so sánh lỏng lẻo hơn
+                let tasks = allData.filter(t => t.date && t.date.trim() === dateKey);
                 
-                // Hiển thị: Nếu dữ liệu trong DB lưu sai chữ hoa/thường, code vẫn hiển thị đúng
                 html += `<tr>
                     <td class="col-thu">${getDayName(currDate.getDay())}</td>
                     <td class="col-ngay">${dd}/${mm}/${yyyy}</td>
-                    <td>${renderTaskList(tasks.filter(t => normalizeSession(t.session) === "Sáng").sort(smartSort))}</td>
-                    <td>${renderTaskList(tasks.filter(t => normalizeSession(t.session) === "Chiều").sort(smartSort))}</td>
+                    <td>${renderTaskList(tasks.filter(t => getSessionType(t.session) === "Sáng").sort((a,b) => convertToMinutes(a.time) - convertToMinutes(b.time)))}</td>
+                    <td>${renderTaskList(tasks.filter(t => getSessionType(t.session) === "Chiều").sort((a,b) => convertToMinutes(a.time) - convertToMinutes(b.time)))}</td>
                 </tr>`;
             }
             document.getElementById("scheduleBody").innerHTML = html;
             
-            let endDate = new Date(startWeekDate); 
-            endDate.setDate(startWeekDate.getDate() + 6);
-            
-            let endD = String(endDate.getDate()).padStart(2,'0');
-            let endM = String(endDate.getMonth()+1).padStart(2,'0');
-            let endY = endDate.getFullYear();
-            let startD = String(startWeekDate.getDate()).padStart(2,'0');
-            let startM = String(startWeekDate.getMonth()+1).padStart(2,'0');
-            let startY = startWeekDate.getFullYear();
-
-            document.getElementById("scheduleDateRange").innerText = `(Từ ngày ${startD}/${startM}/${startY} đến ngày ${endD}/${endM}/${endY})`;
+            let endDate = new Date(startWeekDate); endDate.setDate(startWeekDate.getDate() + 6);
+            document.getElementById("scheduleDateRange").innerText = `(Từ ngày ${startDateObj.getDate()}/${startDateObj.getMonth()+1}/${startDateObj.getFullYear()} đến ngày ${endDate.getDate()}/${endDate.getMonth()+1}/${endDate.getFullYear()})`;
         });
     };
 
     function renderTaskList(tasks) {
         if(tasks.length === 0) return "";
-        return tasks.map(t => `
-            <div class="task-item">
-                ${t.time ? `<span class="task-time">${t.time}:</span>` : ""} 
-                ${t.content} 
-                ${t.person ? `<span class="task-person">(${t.person})</span>` : ""}
-            </div>
-        `).join("");
+        return tasks.map(t => `<div class="task-item">${t.time ? `<span class="task-time">${t.time}:</span>` : ""} ${t.content} ${t.person ? `<span class="task-person">(${t.person})</span>` : ""}</div>`).join("");
     }
 
     const today = new Date();
     const monday = getMonday(today);
-    const mY = monday.getFullYear();
-    const mM = String(monday.getMonth()+1).padStart(2,'0');
-    const mD = String(monday.getDate()).padStart(2,'0');
-    
-    document.getElementById("viewDate").value = `${mY}-${mM}-${mD}`;
+    document.getElementById("viewDate").value = `${monday.getFullYear()}-${String(monday.getMonth()+1).padStart(2,'0')}-${String(monday.getDate()).padStart(2,'0')}`;
     loadSchedule();
-
 </script>
 
 </body>
