@@ -12,29 +12,14 @@
         body { font-family: 'Times New Roman', Times, serif; background-color: #f4f6f9; color: #000; }
         .container { max-width: 1200px; background: white; padding: 40px 30px; margin-top: 20px; margin-bottom: 50px; box-shadow: 0 0 15px rgba(0,0,0,0.1); }
         
-        /* --- HEADER CHUAN QUOC HIEU TIEU NGU --- */
+        /* HEADER */
         .header-top { display: flex; justify-content: space-between; text-align: center; margin-bottom: 15px; }
-        
-        /* Ben trai: So & Truong */
         .header-left h4 { margin: 0; font-size: 15px; text-transform: uppercase; font-weight: normal; }
         .header-left h5 { margin: 0; font-size: 15px; font-weight: bold; text-decoration: underline; margin-top: 5px;}
+        .header-right h4 { margin: 0; font-size: 15px; text-transform: uppercase; font-weight: bold; }
+        .header-right h5 { margin: 0; font-size: 15px; font-weight: bold; font-style: normal; margin-top: 5px; }
         
-        /* Ben phai: Quoc hieu & Tieu ngu */
-        .header-right h4 { 
-            margin: 0; 
-            font-size: 15px; 
-            text-transform: uppercase; 
-            font-weight: bold; 
-        }
-        .header-right h5 { 
-            margin: 0; 
-            font-size: 15px; 
-            font-weight: bold; 
-            font-style: normal; 
-            margin-top: 5px; 
-        }
-        
-        /* Tieu de Lich */
+        /* Tieu de */
         .main-title { text-align: center; color: #0d6efd; text-transform: uppercase; font-weight: bold; margin: 25px 0 5px 0; font-size: 24px; }
         .date-range-display { text-align: center; font-style: italic; margin-bottom: 20px; font-size: 16px; color: #333; }
 
@@ -45,29 +30,17 @@
         .col-thu, .col-ngay { width: 10%; text-align: center; vertical-align: middle !important; font-weight: bold; }
         .col-thu { color: #0056b3; }
         
-        /* Cong viec chung */
-        .general-task { 
-            color: red; 
-            font-weight: bold; 
-            text-align: center; 
-            text-transform: uppercase; 
-            padding: 10px; 
-            background-color: #fff3cd;
-            font-size: 16px;
-        }
-
+        /* Task Styles */
+        .general-task { color: red; font-weight: bold; text-align: center; text-transform: uppercase; padding: 10px; background-color: #fff3cd; font-size: 16px; }
         .task-item { margin-bottom: 8px; border-bottom: 1px dashed #ccc; padding-bottom: 5px; }
         .task-item:last-child { border-bottom: none; }
         .task-time { font-weight: bold; color: #333; margin-right: 5px; }
         .task-person { font-style: italic; color: #555; display: block; font-size: 0.9em; margin-top: 2px;}
 
-        /* Control Bar */
+        /* UI Controls */
         .control-bar { margin-top: 30px; padding: 20px; background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; }
-        
-        /* Admin Panel */
         #adminPanel { display: none; background: #fff; padding: 20px; border: 2px dashed #0d6efd; border-radius: 10px; margin-top: 20px; }
         .nav-tabs .nav-link.active { font-weight: bold; color: #0d6efd; border-bottom: 3px solid #0d6efd; }
-
         .footer-copyright { margin-top: 30px; text-align: center; font-size: 13px; color: #666; border-top: 1px solid #eee; padding-top: 15px; }
         
         @media print {
@@ -131,7 +104,6 @@
         </ul>
 
         <div id="tabGeneral">
-            <div class="alert alert-warning"><i class="fas fa-bullhorn"></i> Dòng chữ đỏ dưới tiêu đề.</div>
             <div class="input-group">
                 <span class="input-group-text fw-bold">Nội dung:</span>
                 <input type="text" id="inputGeneralTask" class="form-control" placeholder="Nhập nội dung...">
@@ -152,7 +124,7 @@
 
         <div id="tabExcel" style="display: none;">
             <div class="alert alert-info">
-                <i class="fas fa-info-circle"></i> Hệ thống hỗ trợ file Excel có <b>Gộp ô (Merge Cells)</b> ở cột Ngày.
+                <i class="fas fa-info-circle"></i> Hỗ trợ ngày dạng: <b>16/2/2026</b>, <b>16/02/26</b>, <b>16-2-2026</b>...
             </div>
             <div class="row align-items-end">
                 <div class="col-md-4"><button class="btn btn-outline-primary w-100" onclick="downloadSample()"><i class="fas fa-download"></i> Tải File Mẫu</button></div>
@@ -185,34 +157,39 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    // --- HAM XU LY NGAY ---
+    // --- HAM XU LY NGAY (UPDATE) ---
     function normalizeDate(input) {
         if (input === undefined || input === null || input === "") return "";
         
-        // 1. NEU LA SO (Excel Serial Date)
+        // 1. Xu ly Excel Serial Number
         if (typeof input === 'number') {
             const dateInfo = window.XLSX.SSF.parse_date_code(input);
             if (dateInfo) {
-                let y = dateInfo.y;
-                let m = String(dateInfo.m).padStart(2, '0');
-                let d = String(dateInfo.d).padStart(2, '0');
-                return `${y}-${m}-${d}`;
+                return `${dateInfo.y}-${String(dateInfo.m).padStart(2, '0')}-${String(dateInfo.d).padStart(2, '0')}`;
             }
         }
         
-        // 2. NEU LA CHU
+        // 2. Xu ly Chuoi (String)
         let str = input.toString().trim();
+        
+        // Chuyen tat ca ve dau / de xu ly (vd: 16-02-2026 -> 16/02/2026)
+        str = str.replace(/[-.]/g, '/');
+
         if (str.includes('/')) {
             const parts = str.split('/');
             if (parts.length === 3) {
-                let d = parts[0].padStart(2, '0');
-                let m = parts[1].padStart(2, '0');
-                let y = parts[2];
-                if (y.length === 2) y = "20" + y;
-                return `${y}-${m}-${d}`;
+                let d = parseInt(parts[0]);
+                let m = parseInt(parts[1]);
+                let y = parseInt(parts[2]);
+
+                if (isNaN(d) || isNaN(m) || isNaN(y)) return "";
+
+                // Xu ly nam 2 chu so (vd: 26 -> 2026)
+                if (y < 100) y += 2000;
+
+                return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
             }
         }
-        if (str.includes('-') && str.length >= 10) return str;
         return "";
     }
 
@@ -250,7 +227,7 @@
         } else { alert("Sai mật khẩu!"); }
     };
 
-    // --- LOGIC DU LIEU ---
+    // --- LOGIC DATA ---
     onValue(ref(db, 'generalTask'), (snapshot) => {
         const val = snapshot.val();
         document.getElementById("displayGeneralTask").innerText = val ? val : "CÔNG VIỆC CHUNG: DẠY VÀ HỌC THEO THỜI KHÓA BIỂU";
@@ -277,9 +254,9 @@
     window.downloadSample = function() {
         const ws_data = [
             ["Ngay (dd/mm/yyyy)", "Buoi", "Gio", "NoiDung", "NguoiThucHien"],
-            ["16/02/2026", "Sáng", "07:00", "Chào cờ đầu tuần", "BGH"],
-            ["16/02/2026", "Chiều", "14:00", "Họp tổ chuyên môn", "Toàn trường"],
-            ["16/02/2026", "Sáng", "07:00", "Kiểm tra nề nếp", "Đoàn TN"]
+            ["16/02/26", "Sáng", "07:00", "Chào cờ (Ngày ngắn 2 số)", "BGH"],
+            ["16/2/2026", "Chiều", "14:00", "Họp (Ngày/Tháng 1 số)", "Tổ Toán"],
+            ["17-02-2026", "Sáng", "07:00", "Kiểm tra (Dùng dấu gạch ngang)", "GVCN"]
         ];
         const ws = XLSX.utils.aoa_to_sheet(ws_data);
         const wb = XLSX.utils.book_new();
@@ -287,7 +264,7 @@
         XLSX.writeFile(wb, "Mau_Lich_Cong_Tac.xlsx");
     };
 
-    // --- HAM NHAP EXCEL (DA SUA LOI GOP O) ---
+    // --- PROCESS EXCEL ---
     window.processExcel = function() {
         const fileInput = document.getElementById('excelFile');
         if(!fileInput.files.length) { alert("Chưa chọn file!"); return; }
@@ -295,32 +272,26 @@
         reader.onload = function(e) {
             const data = new Uint8Array(e.target.result);
             const workbook = XLSX.read(data, {type: 'array'});
-            
-            // raw: true -> Giu nguyen du lieu goc
             const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1, raw: true });
             
             let count = 0;
-            let lastValidDate = null; // Bien luu ngay cua dong truoc do (ho tro Merge Cell)
+            let lastValidDate = null; 
 
             for(let i = 1; i < jsonData.length; i++) {
                 let row = jsonData[i];
                 let rawDate = row[0];
                 let currentContent = row[3];
                 
-                // 1. Xu ly Ngay: Neu dong nay trong ngay, lay ngay cua dong truoc (lastValidDate)
                 let dateStr = normalizeDate(rawDate);
                 
                 if (dateStr) {
-                    lastValidDate = dateStr; // Cap nhat ngay moi nhat
+                    lastValidDate = dateStr; 
                 } else if (lastValidDate && (!rawDate)) {
-                    // Neu o ngay trong (do merge cell hoac de trong), dung ngay cu
                     dateStr = lastValidDate;
                 }
 
-                // Kiem tra hop le
                 if(!dateStr || !currentContent) continue; 
 
-                // 2. Xu ly Buoi (Trim khoang trang thua: "Sáng " -> "Sáng")
                 let sessionRaw = row[1] || "Sáng";
                 let sessionClean = sessionRaw.toString().trim();
 
@@ -354,7 +325,6 @@
                 let dateKey = `${yyyy}-${mm}-${dd}`;
                 let tasks = allData.filter(t => t.date === dateKey);
                 
-                // Render voi dieu kien loc "Sáng"/"Chiều" chinh xac hon
                 html += `<tr>
                     <td class="col-thu">${getDayName(currDate.getDay())}</td>
                     <td class="col-ngay">${dd}/${mm}/${yyyy}</td>
