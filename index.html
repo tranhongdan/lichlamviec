@@ -24,20 +24,28 @@
         .schedule-table th, .schedule-table td { border: 1px solid black; padding: 8px; vertical-align: top; font-size: 15px; word-wrap: break-word; }
         .schedule-table thead th { background-color: #d1e7dd; text-align: center; vertical-align: middle; font-weight: bold; text-transform: uppercase; }
         
-        .col-thu { width: 80px; text-align: center; vertical-align: middle !important; font-weight: bold; color: #0056b3; }
-        .col-ngay { width: 100px; text-align: center; vertical-align: middle !important; font-weight: bold; }
+        .col-thu { width: 90px; text-align: center; vertical-align: middle !important; font-weight: bold; color: #0056b3; }
+        .col-ngay { width: 110px; text-align: center; vertical-align: middle !important; font-weight: bold; }
         
         .general-task { color: red; font-weight: bold; text-align: center; text-transform: uppercase; padding: 10px; background-color: #fff3cd; font-size: 16px; }
         
-        /* CSS cho công việc trên cùng 1 dòng */
-        .task-item { margin-bottom: 4px; padding-bottom: 2px; border-bottom: 1px dashed #eee; line-height: 1.4; }
+        /* CSS cho công việc */
+        .task-item { 
+            margin-bottom: 6px; 
+            padding-bottom: 4px; 
+            border-bottom: 1px dashed #eee; 
+            line-height: 1.5;
+            display: flex;
+            align-items: flex-start;
+        }
         .task-item:last-child { border-bottom: none; }
+        .task-bullet { color: #0d6efd; margin-right: 8px; margin-top: 4px; font-size: 10px; }
+        .task-content-wrapper { flex: 1; }
         .task-time { font-weight: bold; color: #000; }
-        .task-person { font-style: italic; color: #444; margin-left: 4px; }
+        .task-person { font-style: italic; color: #555; margin-left: 4px; }
 
         .control-bar { margin-top: 30px; padding: 20px; background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; }
         #adminPanel { display: none; background: #fff; padding: 20px; border: 2px dashed #0d6efd; border-radius: 10px; margin-top: 20px; }
-        
         .table-manage { font-size: 14px; }
         .btn-xs { padding: 1px 5px; font-size: 12px; }
 
@@ -48,6 +56,7 @@
             .container { box-shadow: none; margin: 0; padding: 0; max-width: 100%; width: 100%; }
             .col-thu { color: black; }
             .main-title { color: black; }
+            .task-bullet { color: black; }
         }
     </style>
 </head>
@@ -177,7 +186,6 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    // --- HÀM TIỆN ÍCH ---
     function normalizeDate(input) {
         if (!input) return "";
         if (typeof input === 'number') {
@@ -196,9 +204,7 @@
         if (!timeStr) return 9999;
         let numbers = timeStr.match(/\d+/g);
         if (!numbers) return 9999;
-        let h = parseInt(numbers[0]);
-        let m = numbers[1] ? parseInt(numbers[1]) : 0;
-        return h * 60 + m;
+        return parseInt(numbers[0]) * 60 + (numbers[1] ? parseInt(numbers[1]) : 0);
     }
 
     const getDayName = (i) => ["Chủ Nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"][i];
@@ -216,7 +222,6 @@
         } else { alert("Sai mật khẩu!"); }
     };
 
-    // --- XỬ LÝ DỮ LIỆU FIREBASE ---
     onValue(ref(db, 'generalTask'), (snapshot) => {
         const val = snapshot.val();
         document.getElementById("displayGeneralTask").innerText = val || "CÔNG VIỆC CHUNG: DẠY VÀ HỌC THEO THỜI KHÓA BIỂU";
@@ -235,7 +240,7 @@
             time: document.getElementById("inputTime").value,
             content: document.getElementById("inputContent").value,
             person: document.getElementById("inputPerson").value,
-            timestamp: Date.now() // Để sắp xếp theo thứ tự nhập nếu ko có giờ
+            timestamp: Date.now()
         };
         if(!data.date || !data.content) { alert("Thiếu ngày hoặc nội dung!"); return; }
         if(key) {
@@ -262,16 +267,15 @@
         document.getElementById("editKey").value = key;
         document.getElementById("inputDate").value = date;
         document.getElementById("inputSession").value = session;
-        document.getElementById("inputTime").value = time === "undefined" ? "" : time;
+        document.getElementById("inputTime").value = (time === "undefined" || time === null) ? "" : time;
         document.getElementById("inputContent").value = content;
-        document.getElementById("inputPerson").value = person === "undefined" ? "" : person;
+        document.getElementById("inputPerson").value = (person === "undefined" || person === null) ? "" : person;
         document.getElementById("btnSaveManual").innerHTML = '<i class="fas fa-edit"></i> CẬP NHẬT';
         document.getElementById("btnCancelEdit").style.display = "inline-block";
         switchTab('manual');
         document.querySelectorAll('.nav-link')[1].click();
     };
 
-    // --- HIỂN THỊ DỮ LIỆU ---
     window.loadSchedule = function() {
         const viewDateStr = document.getElementById("viewDate").value;
         if(!viewDateStr) return;
@@ -285,7 +289,7 @@
                 allData.push(item);
             });
 
-            // Sắp xếp Tab Quản lý (Tab 4): Theo ngày tăng dần -> Buổi -> Giờ/Thứ tự nhập
+            // Tab Quản lý (Tab 4)
             const sortedManage = [...allData].sort((a, b) => {
                 if (a.date !== b.date) return new Date(a.date) - new Date(b.date);
                 if (a.session !== b.session) return a.session === "Sáng" ? -1 : 1;
@@ -308,7 +312,7 @@
             });
             document.getElementById("manageTableBody").innerHTML = manageHtml.join("");
 
-            // Hiển thị Lịch tuần (Bảng chính)
+            // Bảng chính
             let html = "";
             for (let i = 0; i < 7; i++) {
                 let currDate = new Date(startDate);
@@ -334,7 +338,6 @@
     };
 
     function renderTaskList(tasks) {
-        // Sắp xếp theo giờ, nếu ko có giờ thì theo timestamp (thứ tự nhập)
         return tasks.sort((a, b) => {
             let timeA = convertToMinutes(a.time), timeB = convertToMinutes(b.time);
             if (timeA !== timeB) return timeA - timeB;
@@ -343,31 +346,24 @@
         .map(t => {
             let timeSpan = t.time ? `<span class="task-time">${t.time}:</span>` : "";
             let personSpan = t.person ? `<span class="task-person">(${t.person})</span>` : "";
-            return `<div class="task-item">${timeSpan} ${t.content}${personSpan}</div>`;
+            return `
+                <div class="task-item">
+                    <i class="fas fa-circle task-bullet"></i>
+                    <div class="task-content-wrapper">
+                        ${timeSpan} ${t.content}${personSpan}
+                    </div>
+                </div>`;
         }).join("");
     }
 
-    // --- EXCEL & KHỞI TẠO ---
-    window.downloadSample = function() {
-        const ws_data = [
-            ["Ngay (dd/mm/yyyy)", "Buoi", "Gio", "NoiDung", "NguoiThucHien"],
-            ["16/02/2026", "Sáng", "07:00", "Chào cờ đầu tuần", "BGH"]
-        ];
-        const ws = XLSX.utils.aoa_to_sheet(ws_data);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "MauNhapLieu");
-        XLSX.writeFile(wb, "Mau_Lich_Cong_Tac.xlsx");
-    };
-
     window.processExcel = function() {
         const file = document.getElementById('excelFile').files[0];
-        if(!file) { alert("Vui lòng chọn file!"); return; }
+        if(!file) return;
         const reader = new FileReader();
         reader.onload = (e) => {
             const data = new Uint8Array(e.target.result);
             const workbook = XLSX.read(data, {type: 'array'});
             const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header:1});
-            let count = 0;
             jsonData.slice(1).forEach((row, index) => {
                 let d = normalizeDate(row[0]);
                 if(d && row[3]) {
@@ -377,13 +373,11 @@
                         time: row[2] ? row[2].toString() : "", 
                         content: row[3], 
                         person: row[4] || "",
-                        timestamp: Date.now() + index // Đảm bảo thứ tự nhập từ file
+                        timestamp: Date.now() + index
                     });
-                    count++;
                 }
             });
-            alert(`Đã nhập thành công ${count} công việc!`);
-            document.getElementById('excelFile').value = "";
+            alert(`Đã nhập thành công!`);
         };
         reader.readAsArrayBuffer(file);
     };
