@@ -122,7 +122,10 @@
         </div>
 
         <div id="tabExcel" style="display: none;">
-            <div class="alert alert-info py-2"><i class="fas fa-info-circle"></i> File Excel cần đúng thứ tự cột: Ngày | Buổi | Giờ | Nội Dung | Người Thực Hiện</div>
+            <div class="alert alert-info py-2">
+                <i class="fas fa-info-circle"></i> Thứ tự cột: <b>Ngày | Buổi | Giờ | Nội Dung | Người Thực Hiện</b><br>
+                <small>(*Code hỗ trợ gộp ô ngày: Nếu ô ngày trống, sẽ tự lấy ngày của dòng trên)</small>
+            </div>
             <div class="row align-items-end">
                 <div class="col-md-4"><button class="btn btn-outline-primary w-100" onclick="downloadSample()"><i class="fas fa-download"></i> Tải File Mẫu</button></div>
                 <div class="col-md-6"><input type="file" id="excelFile" class="form-control" accept=".xlsx, .xls"></div>
@@ -162,12 +165,12 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    // --- HÀM XỬ LÝ DATE (SIÊU CHUẨN) ---
+    // --- HÀM XỬ LÝ DATE ---
     function normalizeDate(input) {
-        if (!input) return "";
+        if (input === undefined || input === null || input === "") return "";
         let str = input.toString().trim();
         
-        // Excel Serial Date
+        // Excel Serial
         if (typeof input === 'number' || !isNaN(input)) {
             const dateInfo = window.XLSX.SSF.parse_date_code(input);
             if (dateInfo) {
@@ -190,13 +193,10 @@
             }
         }
         
-        // Text yyyy-mm-dd
         if (str.match(/^\d{4}-\d{2}-\d{2}$/)) return str;
-
         return "";
     }
 
-    // --- HÀM CHUẨN HÓA BUỔI ---
     function getSessionType(str) {
         if (!str) return "Sáng";
         let s = str.toString().toLowerCase().trim().normalize('NFC');
@@ -256,12 +256,11 @@
         
         push(ref(db, 'schedules'), { 
             date, 
-            session: getSessionType(session), // Lưu cứng Sáng/Chiều
+            session: getSessionType(session), 
             time, content: content.trim(), person 
         }).then(() => { alert("Đã lưu!"); document.getElementById("inputContent").value = ""; });
     };
 
-    // --- TÍNH NĂNG MỚI: XÓA SẠCH DỮ LIỆU ---
     window.clearAllData = function() {
         if(confirm("Bạn có chắc chắn muốn XÓA TOÀN BỘ lịch không? Dữ liệu sẽ mất vĩnh viễn!")) {
             remove(ref(db, 'schedules')).then(() => {
@@ -275,7 +274,7 @@
         const ws_data = [
             ["Ngay (dd/mm/yyyy)", "Buoi", "Gio", "NoiDung", "NguoiThucHien"],
             ["16/02/2026", "Sáng", "07:00", "Chào cờ đầu tuần", "BGH"],
-            ["16/02/2026", "Chiều", "14:00", "Họp tổ chuyên môn", "Toàn trường"]
+            [null, "Chiều", "14:00", "Họp tổ chuyên môn", "Toàn trường"]
         ];
         const ws = XLSX.utils.aoa_to_sheet(ws_data);
         const wb = XLSX.utils.book_new();
@@ -283,6 +282,7 @@
         XLSX.writeFile(wb, "Mau_Lich_Cong_Tac.xlsx");
     };
 
+    // --- XỬ LÝ EXCEL VỚI LOGIC "FILL DOWN" (TỰ ĐIỀN NGÀY) ---
     window.processExcel = function() {
         const fileInput = document.getElementById('excelFile');
         if(!fileInput.files.length) { alert("Chưa chọn file!"); return; }
@@ -295,31 +295,40 @@
                 const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1, raw: true, defval: "" });
                 
                 let success = 0, firstDateFound = "";
+                let lastValidDate = ""; // Biến lưu ngày gần nhất để điền cho ô trống
 
                 for(let i = 1; i < jsonData.length; i++) {
                     let row = jsonData[i];
-                    if(!row[0] && !row[3]) continue;
+                    
+                    // 1. Logic Fill Down: Nếu ô ngày có dữ liệu -> dùng nó & lưu lại. Nếu không -> dùng ngày cũ.
+                    let currentRowDate = normalizeDate(row[0]);
+                    
+                    if(currentRowDate) {
+                        lastValidDate = currentRowDate; // Cập nhật ngày mới
+                    } else if (lastValidDate !== "") {
+                        currentRowDate = lastValidDate; // Dùng lại ngày của dòng trên
+                    }
 
-                    let dateStr = normalizeDate(row[0]);
+                    // 2. Kiểm tra nội dung
                     let contentRaw = row[3] ? row[3].toString().trim() : "";
                     
-                    if(dateStr && contentRaw) {
+                    // Chỉ lưu nếu có Ngày (đã fill) và có Nội dung
+                    if(currentRowDate && contentRaw) {
                         push(ref(db, 'schedules'), {
-                            date: dateStr, 
+                            date: currentRowDate, 
                             session: getSessionType(row[1]),
                             time: row[2] ? row[2].toString().trim() : "", 
                             content: contentRaw, 
                             person: row[4] ? row[4].toString().trim() : ""
                         });
                         success++;
-                        if(!firstDateFound) firstDateFound = dateStr;
+                        if(!firstDateFound) firstDateFound = currentRowDate;
                     }
                 }
                 
                 alert(`Đã nhập thành công ${success} công việc!`);
                 fileInput.value = "";
                 
-                // Tự động nhảy đến ngày vừa nhập
                 if(firstDateFound) {
                     document.getElementById("viewDate").value = firstDateFound;
                     loadSchedule();
@@ -353,7 +362,6 @@
                 let dd = String(currDate.getDate()).padStart(2,'0');
                 let dateKey = `${yyyy}-${mm}-${dd}`;
                 
-                // LỌC DỮ LIỆU: Cho phép so sánh lỏng lẻo hơn
                 let tasks = allData.filter(t => t.date && t.date.trim() === dateKey);
                 
                 html += `<tr>
