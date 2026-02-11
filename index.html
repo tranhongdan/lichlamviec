@@ -12,7 +12,6 @@
         body { font-family: 'Times New Roman', Times, serif; background-color: #f4f6f9; color: #000; }
         .container { max-width: 1200px; background: white; padding: 40px 30px; margin-top: 20px; margin-bottom: 50px; box-shadow: 0 0 15px rgba(0,0,0,0.1); }
         
-        /* --- PHẦN NỘI DUNG CHÍNH (HEADER & TABLE) --- */
         .header-top { display: flex; justify-content: space-between; text-align: center; margin-bottom: 10px; font-weight: bold; }
         .header-left h4, .header-right h4 { margin: 0; font-size: 15px; text-transform: uppercase; }
         .header-left h5 { margin: 0; font-size: 14px; font-weight: bold; text-decoration: underline; margin-top: 3px;}
@@ -27,21 +26,26 @@
         .col-thu, .col-ngay { width: 10%; text-align: center; vertical-align: middle !important; font-weight: bold; }
         .col-thu { color: #0056b3; }
         
-        .general-task { color: red; font-weight: bold; text-align: center; text-transform: uppercase; padding: 8px; background-color: #fff3cd; }
+        /* Dòng Công việc chung (Dynamic) */
+        .general-task { 
+            color: red; 
+            font-weight: bold; 
+            text-align: center; 
+            text-transform: uppercase; 
+            padding: 10px; 
+            background-color: #fff3cd;
+            font-size: 16px;
+        }
+
         .task-item { margin-bottom: 8px; border-bottom: 1px dashed #ccc; padding-bottom: 5px; }
         .task-item:last-child { border-bottom: none; }
         .task-time { font-weight: bold; color: #333; margin-right: 5px; }
         .task-person { font-style: italic; color: #555; display: block; font-size: 0.9em; margin-top: 2px;}
 
-        /* --- PHẦN CÔNG CỤ (ĐƯA XUỐNG DƯỚI) --- */
-        .control-bar {
-            margin-top: 30px;
-            padding: 20px;
-            background-color: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 8px;
-        }
-
+        /* Control Bar */
+        .control-bar { margin-top: 30px; padding: 20px; background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; }
+        
+        /* Admin Panel */
         #adminPanel { display: none; background: #fff; padding: 20px; border: 2px dashed #0d6efd; border-radius: 10px; margin-top: 20px; }
         .nav-tabs .nav-link.active { font-weight: bold; color: #0d6efd; border-bottom: 3px solid #0d6efd; }
 
@@ -50,7 +54,6 @@
         @media print {
             .no-print { display: none !important; }
             .container { box-shadow: none; margin: 0; padding: 0; max-width: 100%; width: 100%; }
-            .main-title { color: black; }
             .col-thu { color: black; }
         }
     </style>
@@ -75,7 +78,7 @@
     <table class="schedule-table">
         <thead>
             <tr><th>THỨ</th><th>NGÀY</th><th style="width: 40%;">BUỔI SÁNG</th><th style="width: 40%;">BUỔI CHIỀU</th></tr>
-            <tr><td colspan="4" class="general-task">CÔNG VIỆC CHUNG: DẠY VÀ HỌC THEO THỜI KHÓA BIỂU</td></tr>
+            <tr><td colspan="4" class="general-task" id="displayGeneralTask">Đang tải công việc chung...</td></tr>
         </thead>
         <tbody id="scheduleBody"><tr><td colspan="4" class="text-center p-3">Đang tải dữ liệu...</td></tr></tbody>
     </table>
@@ -84,13 +87,13 @@
         <div class="row align-items-center">
             <div class="col-md-5">
                 <div class="input-group">
-                    <span class="input-group-text fw-bold bg-white"><i class="far fa-calendar-alt text-primary"></i>&nbsp; Chọn ngày xem:</span>
+                    <span class="input-group-text fw-bold bg-white"><i class="far fa-calendar-alt text-primary"></i>&nbsp; Xem từ ngày:</span>
                     <input type="date" id="viewDate" class="form-control" onchange="loadSchedule()">
                 </div>
             </div>
             <div class="col-md-7 text-end">
                 <button class="btn btn-secondary me-2" onclick="window.print()"><i class="fas fa-print"></i> In Lịch</button>
-                <button class="btn btn-danger" onclick="toggleAdmin()"><i class="fas fa-user-cog"></i> Quản trị / Nhập liệu</button>
+                <button class="btn btn-danger" onclick="toggleAdmin()"><i class="fas fa-user-cog"></i> Quản trị</button>
             </div>
         </div>
     </div>
@@ -102,60 +105,41 @@
         </div>
 
         <ul class="nav nav-tabs mb-3">
-            <li class="nav-item"><button class="nav-link active" onclick="switchTab('manual')">Nhập Thủ Công</button></li>
-            <li class="nav-item"><button class="nav-link" onclick="switchTab('excel')">Nhập từ Excel</button></li>
+            <li class="nav-item"><button class="nav-link active" onclick="switchTab('general')">1. Công Việc Chung</button></li>
+            <li class="nav-item"><button class="nav-link" onclick="switchTab('manual')">2. Nhập Lịch (Thủ Công)</button></li>
+            <li class="nav-item"><button class="nav-link" onclick="switchTab('excel')">3. Nhập Lịch (Excel)</button></li>
         </ul>
 
-        <div id="tabManual">
+        <div id="tabGeneral">
+            <div class="alert alert-warning">
+                <i class="fas fa-bullhorn"></i> Dòng này sẽ hiển thị màu đỏ, nổi bật ngay dưới tiêu đề bảng.
+            </div>
+            <div class="input-group">
+                <span class="input-group-text fw-bold">Nội dung:</span>
+                <input type="text" id="inputGeneralTask" class="form-control" placeholder="VD: DẠY VÀ HỌC THEO THỜI KHÓA BIỂU...">
+                <button class="btn btn-warning fw-bold" onclick="saveGeneralTask()">Lưu Thay Đổi</button>
+            </div>
+        </div>
+
+        <div id="tabManual" style="display: none;">
             <div class="row g-3">
-                <div class="col-md-3">
-                    <label class="fw-bold">Ngày:</label>
-                    <input type="date" id="inputDate" class="form-control">
-                </div>
-                <div class="col-md-3">
-                    <label class="fw-bold">Buổi:</label>
-                    <select id="inputSession" class="form-select">
-                        <option value="Sáng">Buổi Sáng</option>
-                        <option value="Chiều">Buổi Chiều</option>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <label class="fw-bold">Giờ (VD: 07:30):</label>
-                    <input type="text" id="inputTime" class="form-control">
-                </div>
-                <div class="col-md-3">
-                    <label class="fw-bold">Người thực hiện:</label>
-                    <input type="text" id="inputPerson" class="form-control">
-                </div>
-                <div class="col-12">
-                    <label class="fw-bold">Nội dung:</label>
-                    <input type="text" id="inputContent" class="form-control" placeholder="Nhập nội dung công việc...">
-                </div>
-                <div class="col-12 text-center mt-3">
-                    <button class="btn btn-success px-4" onclick="addSchedule()"><i class="fas fa-save"></i> LƯU DỮ LIỆU</button>
-                </div>
+                <div class="col-md-3"><label class="fw-bold">Ngày:</label><input type="date" id="inputDate" class="form-control"></div>
+                <div class="col-md-3"><label class="fw-bold">Buổi:</label><select id="inputSession" class="form-select"><option value="Sáng">Buổi Sáng</option><option value="Chiều">Buổi Chiều</option></select></div>
+                <div class="col-md-3"><label class="fw-bold">Giờ:</label><input type="text" id="inputTime" class="form-control"></div>
+                <div class="col-md-3"><label class="fw-bold">Người thực hiện:</label><input type="text" id="inputPerson" class="form-control"></div>
+                <div class="col-12"><label class="fw-bold">Nội dung:</label><input type="text" id="inputContent" class="form-control" placeholder="Nhập nội dung..."></div>
+                <div class="col-12 text-center mt-3"><button class="btn btn-success px-4" onclick="addSchedule()"><i class="fas fa-save"></i> LƯU LỊCH</button></div>
             </div>
         </div>
 
         <div id="tabExcel" style="display: none;">
             <div class="alert alert-info">
-                <i class="fas fa-info-circle"></i> File Excel cần có cột Ngày định dạng: <b>dd/mm/yyyy</b> (Ví dụ: 16/02/2026).
+                <i class="fas fa-info-circle"></i> Cột Ngày định dạng: <b>dd/mm/yyyy</b>. Hệ thống sẽ đọc toàn bộ dòng có dữ liệu.
             </div>
             <div class="row align-items-end">
-                <div class="col-md-4">
-                    <button class="btn btn-outline-primary w-100" onclick="downloadSample()">
-                        <i class="fas fa-download"></i> Tải File Mẫu (.xlsx)
-                    </button>
-                </div>
-                <div class="col-md-6">
-                    <label class="fw-bold">Chọn file Excel:</label>
-                    <input type="file" id="excelFile" class="form-control" accept=".xlsx, .xls">
-                </div>
-                <div class="col-md-2">
-                    <button class="btn btn-success w-100" onclick="processExcel()">
-                        <i class="fas fa-upload"></i> Nhập
-                    </button>
-                </div>
+                <div class="col-md-4"><button class="btn btn-outline-primary w-100" onclick="downloadSample()"><i class="fas fa-download"></i> Tải File Mẫu</button></div>
+                <div class="col-md-6"><label class="fw-bold">Chọn file Excel:</label><input type="file" id="excelFile" class="form-control" accept=".xlsx, .xls"></div>
+                <div class="col-md-2"><button class="btn btn-success w-100" onclick="processExcel()"><i class="fas fa-upload"></i> Nhập</button></div>
             </div>
         </div>
     </div>
@@ -168,7 +152,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-    import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+    import { getDatabase, ref, push, set, onValue } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyBZ7HZoLwwIO5P42Ywy_E39bxQArDQaPMo",
@@ -183,10 +167,11 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    // --- CÁC HÀM XỬ LÝ (GIỮ NGUYÊN LOGIC ỔN ĐỊNH) ---
+    // --- HELPER FUNCTIONS ---
     function normalizeDate(input) {
         if (!input) return "";
         let str = input.toString().trim();
+        // Xử lý dd/mm/yyyy
         if (str.includes('/')) {
             const parts = str.split('/');
             if (parts.length === 3) {
@@ -195,7 +180,9 @@
                 return `${y}-${m}-${d}`;
             }
         }
+        // Xử lý yyyy-mm-dd
         if (str.includes('-') && str.length >= 10) return str;
+        // Xử lý Excel Serial Date
         if (!isNaN(str) && str.length < 8) {
              const date = new Date(Math.round((input - 25569) * 86400 * 1000));
              return date.toISOString().split('T')[0];
@@ -221,22 +208,44 @@
     }
     function getDayName(i) { return ["Chủ Nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"][i]; }
 
-    // --- GIAO DIỆN ---
+    // --- UI LOGIC ---
     window.switchTab = function(tabName) {
         document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
-        document.getElementById('tabManual').style.display = tabName === 'manual' ? 'block' : 'none';
-        document.getElementById('tabExcel').style.display = tabName === 'excel' ? 'block' : 'none';
+        document.getElementById('tabGeneral').style.display = 'none';
+        document.getElementById('tabManual').style.display = 'none';
+        document.getElementById('tabExcel').style.display = 'none';
+        
+        document.getElementById('tab' + tabName.charAt(0).toUpperCase() + tabName.slice(1)).style.display = 'block';
         event.target.classList.add('active');
     }
 
     window.toggleAdmin = function() {
         if (prompt("Nhập mật khẩu quản trị:") === "123456") {
             document.getElementById("adminPanel").style.display = "block";
-            // Tự động cuộn xuống phần admin để dễ nhìn
             document.getElementById("adminPanel").scrollIntoView({behavior: "smooth"});
         } else { alert("Sai mật khẩu!"); }
     };
 
+    // --- 1. XỬ LÝ CÔNG VIỆC CHUNG (MỚI) ---
+    // Tải dữ liệu khi mở web
+    onValue(ref(db, 'generalTask'), (snapshot) => {
+        const val = snapshot.val();
+        // Hiển thị ra bảng
+        document.getElementById("displayGeneralTask").innerText = val ? val : "CÔNG VIỆC CHUNG: DẠY VÀ HỌC THEO THỜI KHÓA BIỂU";
+        // Hiển thị vào ô input admin để sửa
+        document.getElementById("inputGeneralTask").value = val ? val : "";
+    });
+
+    // Lưu dữ liệu
+    window.saveGeneralTask = function() {
+        const content = document.getElementById("inputGeneralTask").value;
+        if (!content) { alert("Nội dung không được để trống!"); return; }
+        set(ref(db, 'generalTask'), content)
+        .then(() => { alert("Đã cập nhật Công việc chung!"); })
+        .catch((e) => { alert("Lỗi: " + e.message); });
+    }
+
+    // --- 2. XỬ LÝ NHẬP LỊCH ---
     window.addSchedule = function() {
         const date = document.getElementById("inputDate").value; 
         const session = document.getElementById("inputSession").value;
@@ -248,6 +257,7 @@
         .then(() => { alert("Đã lưu!"); document.getElementById("inputContent").value = ""; });
     };
 
+    // --- 3. XỬ LÝ EXCEL (CẢI TIẾN) ---
     window.downloadSample = function() {
         const ws_data = [
             ["Ngay (dd/mm/yyyy)", "Buoi", "Gio", "NoiDung", "NguoiThucHien"],
@@ -267,14 +277,26 @@
             const data = new Uint8Array(e.target.result);
             const workbook = XLSX.read(data, {type: 'array'});
             const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1, raw: false, dateNF: "dd/mm/yyyy" });
+            
             let count = 0;
+            // Bắt đầu quét từ dòng 1 (dòng 0 là tiêu đề)
             for(let i = 1; i < jsonData.length; i++) {
                 let row = jsonData[i];
-                if(!row[0] || !row[3]) continue;
-                let dateStr = normalizeDate(row[0]);
-                if (!dateStr) continue;
+                // Kiểm tra lỏng hơn: Chỉ cần có Ngày VÀ Nội dung là nhận
+                // Dùng normalizeDate để check ngày hợp lệ
+                let dateStr = normalizeDate(row[0]); 
+                
+                if(!dateStr || !row[3]) {
+                    // Nếu dòng này thiếu ngày hoặc nội dung, bỏ qua không báo lỗi (vì có thể là dòng trống)
+                    continue; 
+                }
+
                 push(ref(db, 'schedules'), {
-                    date: dateStr, session: row[1] || "Sáng", time: row[2] ? row[2].toString() : "", content: row[3], person: row[4] || ""
+                    date: dateStr, 
+                    session: row[1] || "Sáng", 
+                    time: row[2] ? row[2].toString() : "", 
+                    content: row[3], 
+                    person: row[4] || ""
                 });
                 count++;
             }
@@ -284,11 +306,10 @@
         reader.readAsArrayBuffer(fileInput.files[0]);
     };
 
+    // --- 4. HIỂN THỊ LỊCH ---
     window.loadSchedule = function() {
         const viewDateStr = document.getElementById("viewDate").value;
         if(!viewDateStr) return;
-        
-        // Logic: Lấy ngày chọn làm mốc bắt đầu
         const startDate = new Date(viewDateStr);
         
         onValue(ref(db, 'schedules'), (snapshot) => {
@@ -322,7 +343,6 @@
         return tasks.map(t => `<div class="task-item">${t.time?`<span class="task-time">${t.time}:</span>`:""} ${t.content} ${t.person?`<span class="task-person">(${t.person})</span>`:""}</div>`).join("");
     }
 
-    // Mặc định chọn Thứ 2 tuần này
     document.getElementById("viewDate").valueAsDate = getMonday(new Date());
     loadSchedule();
 </script>
