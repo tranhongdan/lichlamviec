@@ -170,11 +170,11 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    // --- HÀM XỬ LÝ DATE (QUAN TRỌNG ĐỂ KHỚP DỮ LIỆU) ---
+    // --- HÀM XỬ LÝ DATE (ĐÃ NÂNG CẤP) ---
     function normalizeDate(input) {
         if (!input) return "";
         
-        // 1. Nếu là số Excel Serial (ví dụ: 45321)
+        // 1. Số Excel (Serial Date)
         if (typeof input === 'number') {
             const dateInfo = window.XLSX.SSF.parse_date_code(input);
             if (dateInfo) {
@@ -185,39 +185,43 @@
             }
         }
         
-        // 2. Nếu là chuỗi Text
-        let str = input.toString().trim();
-        // Xử lý dd/mm/yyyy hoặc d/m/yyyy
+        // 2. Chuỗi Text (Xử lý kỹ các khoảng trắng thừa)
+        let str = input.toString().trim().normalize('NFC');
+        
         if (str.includes('/')) {
             const parts = str.split('/');
             if (parts.length === 3) {
-                let d = parts[0].padStart(2, '0');
-                let m = parts[1].padStart(2, '0');
-                let y = parts[2];
-                if (y.length === 2) y = "20" + y; // Xử lý năm tắt 26 -> 2026
+                // Thêm .trim() cho từng phần để tránh lỗi "16 / 02"
+                let d = parts[0].trim().padStart(2, '0');
+                let m = parts[1].trim().padStart(2, '0');
+                let y = parts[2].trim();
+                if (y.length === 2) y = "20" + y; 
                 return `${y}-${m}-${d}`;
             }
         }
-        // Xử lý dd-mm-yyyy
         if (str.includes('-')) {
             const parts = str.split('-');
-            if (parts.length === 3 && parts[0].length <= 2) { // dd-mm-yyyy
-                 let d = parts[0].padStart(2, '0');
-                 let m = parts[1].padStart(2, '0');
-                 let y = parts[2];
+            if (parts.length === 3 && parts[0].length <= 2) { 
+                 let d = parts[0].trim().padStart(2, '0');
+                 let m = parts[1].trim().padStart(2, '0');
+                 let y = parts[2].trim();
                  return `${y}-${m}-${d}`;
             }
-            // Nếu đã là yyyy-mm-dd thì giữ nguyên
-            if(parts[0].length === 4) return str;
+            if(parts[0].length === 4) return str; // yyyy-mm-dd
         }
         return "";
     }
 
-    // --- CHUẨN HÓA BUỔI (Sáng/Chiều) ---
+    // --- HÀM CHUẨN HÓA BUỔI (QUAN TRỌNG) ---
+    // Hàm này ép mọi biến thể về đúng 2 từ khóa: "Sáng" hoặc "Chiều"
     function normalizeSession(str) {
         if(!str) return "Sáng";
-        let s = str.toString().toLowerCase().trim();
-        if(s.includes("ch") || s.includes("chiều") || s.includes("chiêu")) return "Chiều";
+        // Chuyển về chữ thường, bỏ dấu cách thừa, chuẩn hóa Unicode
+        let s = str.toString().toLowerCase().trim().normalize('NFC');
+        
+        // Chỉ cần chứa chữ "ch" là tính là Chiều (chiều, chieu, buổi chiều, c)
+        if(s.includes("ch") || s === "c") return "Chiều";
+        
         return "Sáng";
     }
 
@@ -284,7 +288,7 @@
         
         push(ref(db, 'schedules'), { 
             date, 
-            session: normalizeSession(session), // Chuẩn hóa luôn khi lưu
+            session: normalizeSession(session), // Chuẩn hóa ngay khi nhập tay
             time, 
             content: content.trim(), 
             person 
@@ -306,7 +310,7 @@
         XLSX.writeFile(wb, "Mau_Lich_Cong_Tac.xlsx");
     };
 
-    // --- HÀM NHẬP EXCEL (ĐÃ CẢI TIẾN) ---
+    // --- HÀM NHẬP EXCEL (ĐÃ SỬA LỖI BỎ SÓT DÒNG) ---
     window.processExcel = function() {
         const fileInput = document.getElementById('excelFile');
         if(!fileInput.files.length) { alert("Chưa chọn file!"); return; }
@@ -316,27 +320,28 @@
             const data = new Uint8Array(e.target.result);
             const workbook = XLSX.read(data, {type: 'array'});
             
-            // raw: true giúp giữ nguyên giá trị gốc để normalizeDate xử lý
+            // Lấy dữ liệu thô (raw: true) để tự xử lý ngày tháng
             const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1, raw: true });
             
             let count = 0;
-            // Bắt đầu từ dòng 1 (bỏ tiêu đề)
+            // Duyệt từ dòng 1 (bỏ qua tiêu đề)
             for(let i = 1; i < jsonData.length; i++) {
                 let row = jsonData[i];
                 if(!row || row.length === 0) continue;
 
-                // Chuẩn hóa Ngày
-                let dateStr = normalizeDate(row[0]); 
-                // Kiểm tra nội dung (cột 3)
+                // 1. Xử lý Ngày
+                let dateStr = normalizeDate(row[0]);
+                
+                // 2. Xử lý Nội Dung (bắt buộc có mới lưu)
                 let contentRaw = row[3] ? row[3].toString().trim() : "";
                 
                 if(!dateStr || contentRaw === "") continue; 
 
-                // Chuẩn hóa Buổi (cột 1) - Tự động nhận diện 'chieu', 'CHIEU', 'Sáng '
+                // 3. Xử lý Buổi (Tự động sửa lỗi "Chiều " có dấu cách)
                 let sessionRaw = row[1];
                 let sessionFinal = normalizeSession(sessionRaw);
 
-                // Chuẩn hóa Giờ và Người (cột 2 và 4)
+                // 4. Các thông tin phụ
                 let timeStr = row[2] ? row[2].toString().trim() : "";
                 let personStr = row[4] ? row[4].toString().trim() : "";
 
@@ -359,19 +364,17 @@
         const viewDateStr = document.getElementById("viewDate").value;
         if(!viewDateStr) return;
         
-        // Phân tích ngày thủ công để tránh lỗi lệch múi giờ UTC/Local
         const [vY, vM, vD] = viewDateStr.split("-").map(Number);
-        const startDateObj = new Date(vY, vM - 1, vD); // Tháng trong JS bắt đầu từ 0
+        const startDateObj = new Date(vY, vM - 1, vD); 
         
         onValue(ref(db, 'schedules'), (snapshot) => {
             const allData = [];
             snapshot.forEach(child => allData.push(child.val()));
             
             let html = "";
-            let startWeekDate = new Date(startDateObj); // Copy object
+            let startWeekDate = new Date(startDateObj); 
 
             for (let i = 0; i < 7; i++) {
-                // Tạo đối tượng ngày cho từng thứ trong tuần
                 let currDate = new Date(startWeekDate);
                 currDate.setDate(startWeekDate.getDate() + i);
                 
@@ -381,9 +384,9 @@
                 
                 let dateKey = `${yyyy}-${mm}-${dd}`;
                 
-                // Lọc dữ liệu theo dateKey chính xác
                 let tasks = allData.filter(t => t.date === dateKey);
                 
+                // Lọc chính xác theo từ khóa đã chuẩn hóa "Sáng" / "Chiều"
                 html += `<tr>
                     <td class="col-thu">${getDayName(currDate.getDay())}</td>
                     <td class="col-ngay">${dd}/${mm}/${yyyy}</td>
@@ -419,10 +422,8 @@
         `).join("");
     }
 
-    // Khởi động: Chọn thứ 2 của tuần hiện tại
     const today = new Date();
     const monday = getMonday(today);
-    // Chuyển thành chuỗi yyyy-mm-dd cho input date
     const mY = monday.getFullYear();
     const mM = String(monday.getMonth()+1).padStart(2,'0');
     const mD = String(monday.getDate()).padStart(2,'0');
