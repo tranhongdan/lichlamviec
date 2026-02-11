@@ -20,7 +20,6 @@
         .main-title { text-align: center; color: #0d6efd; text-transform: uppercase; font-weight: bold; margin: 25px 0 5px 0; font-size: 24px; }
         .date-range-display { text-align: center; font-style: italic; margin-bottom: 20px; font-size: 16px; color: #333; }
         
-        /* 2. Tiêu đề bảng nền xanh dương nhạt */
         .schedule-table { width: 100%; border-collapse: collapse; border: 1px solid black; table-layout: fixed; }
         .schedule-table th, .schedule-table td { border: 1px solid black; padding: 8px; vertical-align: top; font-size: 15px; word-wrap: break-word; }
         .schedule-table thead th { background-color: #e3f2fd; text-align: center; vertical-align: middle; font-weight: bold; text-transform: uppercase; color: #0d47a1; }
@@ -28,7 +27,6 @@
         .col-thu { width: 90px; text-align: center; vertical-align: middle !important; font-weight: bold; color: #0056b3; }
         .col-ngay { width: 115px; text-align: center; vertical-align: middle !important; font-weight: bold; }
         
-        /* 1. Highlight ngày hiện tại xanh dương nhạt */
         .today-highlight { background-color: #e1f5fe !important; }
 
         .general-task { color: red; font-weight: bold; text-align: center; text-transform: uppercase; padding: 10px; background-color: #fff3cd; font-size: 16px; }
@@ -74,7 +72,7 @@
     <table class="schedule-table">
         <thead>
             <tr><th class="col-thu">THỨ</th><th class="col-ngay">NGÀY</th><th>BUỔI SÁNG</th><th>BUỔI CHIỀU</th></tr>
-            <tr><td colspan="4" class="general-task" id="displayGeneralTask">Đang tải...</td></tr>
+            <tr><td colspan="4" class="general-task" id="displayGeneralTask">Đang tải dữ liệu...</td></tr>
         </thead>
         <tbody id="scheduleBody"></tbody>
     </table>
@@ -89,7 +87,7 @@
             </div>
             <div class="col-md-7 text-end">
                 <button class="btn btn-secondary me-2" onclick="window.print()"><i class="fas fa-print"></i> In Lịch</button>
-                <button class="btn btn-danger" onclick="toggleAdmin()"><i class="fas fa-user-lock"></i> Đăng nhập Quản trị</button>
+                <button class="btn btn-danger" onclick="toggleAdmin()"><i class="fas fa-user-lock"></i> Đăng nhập</button>
             </div>
         </div>
     </div>
@@ -149,12 +147,14 @@
         <div id="tabAccounts" style="display: none;">
             <div class="card card-body mb-3">
                 <div class="row g-2">
-                    <div class="col-md-8"><input type="text" id="accSuffix" class="form-control" placeholder="Nhập chuỗi xxxx để tạo tk con (tenxxxx)"></div>
-                    <div class="col-md-4"><button class="btn btn-primary w-100" onclick="createSubAccount()">Tạo Tài Khoản Con</button></div>
+                    <div class="col-md-5"><input type="text" id="accUsername" class="form-control" placeholder="Tên tài khoản (tự đặt)"></div>
+                    <div class="col-md-4"><input type="text" id="accCode" class="form-control" maxlength="4" placeholder="Mã bảo mật (4 số)"></div>
+                    <div class="col-md-3"><button class="btn btn-primary w-100" onclick="createSubAccount()">Tạo Acc Con</button></div>
                 </div>
+                <small class="text-muted mt-2">Định dạng đăng nhập sẽ là: [Tên][Mã]. Ví dụ: "tranphu" + "1234" = "tranphu1234"</small>
             </div>
             <table class="table table-bordered table-sm">
-                <thead><tr class="table-secondary"><th>Tài khoản đăng nhập</th><th>Thao tác</th></tr></thead>
+                <thead><tr class="table-secondary"><th>Tài khoản hiện có</th><th>Mã bảo mật (4 số cuối)</th><th>Thao tác</th></tr></thead>
                 <tbody id="accountTableBody"></tbody>
             </table>
         </div>
@@ -184,29 +184,27 @@
     const db = getDatabase(app);
     let currentUser = null; 
 
-    // --- XỬ LÝ ĐĂNG NHẬP & TÀI KHOẢN ---
+    // --- QUẢN LÝ ĐĂNG NHẬP ---
     window.toggleAdmin = function() {
-        const inputPwd = prompt("Nhập tài khoản đăng nhập (Admin hoặc tenxxxx):");
-        if (!inputPwd) return;
+        const inputLogin = prompt("Nhập đầy đủ [Tên][Mã] (Ví dụ: tranphu1234) hoặc 123456 cho Admin:");
+        if (!inputLogin) return;
 
-        if (inputPwd === "123456") {
+        if (inputLogin === "123456") {
             currentUser = 'admin';
             showPanel();
-        } else if (inputPwd.startsWith("ten")) {
+        } else {
             onValue(ref(db, 'subAccounts'), (snap) => {
                 let found = false;
                 snap.forEach(child => {
-                    if ("ten" + child.val().password === inputPwd) {
+                    const acc = child.val();
+                    if (acc.username + acc.code === inputLogin) {
                         currentUser = child.key;
                         found = true;
                     }
                 });
-                if (found) {
-                    showPanel();
-                } else { alert("Tài khoản không chính xác!"); }
+                if (found) showPanel();
+                else alert("Thông tin đăng nhập không chính xác!");
             }, { onlyOnce: true });
-        } else {
-            alert("Định dạng đăng nhập không hợp lệ!");
         }
     };
 
@@ -216,13 +214,15 @@
         document.querySelectorAll('.admin-only').forEach(el => el.style.display = isAdmin ? 'block' : 'none');
         
         if (isAdmin) {
-            document.getElementById("userInfoDisplay").innerText = "ADMIN";
+            document.getElementById("userInfoDisplay").innerText = "QUẢN TRỊ VIÊN";
         } else {
             onValue(ref(db, `subAccounts/${currentUser}`), (s) => {
-                document.getElementById("userInfoDisplay").innerText = "User: ten" + s.val().password;
-                if (confirm("Bạn có muốn đổi chuỗi xxxx để tăng tính bảo mật cho tài khoản không?")) {
-                    const newX = prompt("Nhập chuỗi xxxx mới:");
-                    if(newX) set(ref(db, `subAccounts/${currentUser}/password`), newX);
+                const acc = s.val();
+                document.getElementById("userInfoDisplay").innerText = "Tài khoản: " + acc.username;
+                if (confirm("Bạn có muốn đổi 4 ký tự mã bảo mật cuối không?")) {
+                    const newCode = prompt("Nhập 4 ký tự mã mới:");
+                    if(newCode && newCode.length === 4) set(ref(db, `subAccounts/${currentUser}/code`), newCode);
+                    else alert("Mã phải đúng 4 ký tự!");
                 }
             }, { onlyOnce: true });
             switchTab('manual');
@@ -231,22 +231,31 @@
 
     window.logoutAdmin = () => { currentUser = null; document.getElementById("adminPanel").style.display = "none"; };
 
+    // --- QUẢN LÝ TÀI KHOẢN CON ---
     window.createSubAccount = () => {
-        const s = document.getElementById("accSuffix").value;
-        if(s) {
-            push(ref(db, 'subAccounts'), { password: s });
-            document.getElementById("accSuffix").value = "";
+        const username = document.getElementById("accUsername").value.trim();
+        const code = document.getElementById("accCode").value.trim();
+        if(username && code.length === 4) {
+            push(ref(db, 'subAccounts'), { username, code });
+            document.getElementById("accUsername").value = "";
+            document.getElementById("accCode").value = "";
+            alert("Đã tạo tài khoản: " + username + code);
+        } else {
+            alert("Vui lòng nhập tên và mã bảo mật đúng 4 ký tự!");
         }
     };
 
     onValue(ref(db, 'subAccounts'), (snap) => {
         let h = "";
-        snap.forEach(c => { h += `<tr><td><b>ten${c.val().password}</b></td><td><button class="btn btn-xs btn-danger" onclick="removeAcc('${c.key}')">Xóa</button></td></tr>`; });
+        snap.forEach(c => { 
+            const acc = c.val();
+            h += `<tr><td><b>${acc.username}</b></td><td>${acc.code}</td><td><button class="btn btn-xs btn-danger" onclick="removeAcc('${c.key}')">Xóa</button></td></tr>`; 
+        });
         document.getElementById("accountTableBody").innerHTML = h;
     });
     window.removeAcc = (key) => confirm("Xóa tài khoản này?") && remove(ref(db, `subAccounts/${key}`));
 
-    // --- LOGIC LỊCH ---
+    // --- LOGIC LỊCH (Giữ nguyên các cải tiến trước) ---
     window.loadSchedule = function() {
         const viewDateStr = document.getElementById("viewDate").value;
         const filterDate = document.getElementById("filterListDate").value;
@@ -256,14 +265,12 @@
             const allData = [];
             snapshot.forEach(child => { let v = child.val(); v.key = child.key; allData.push(v); });
 
-            // Tab 4: Danh sách lọc
             const listData = filterDate ? allData.filter(i => i.date === filterDate) : allData;
             document.getElementById("manageTableBody").innerHTML = listData.sort((a,b) => new Date(a.date)-new Date(b.date)).map(item => `
                 <tr><td>${item.date}</td><td>${item.session}</td><td>${item.time||''}</td><td>${item.content}</td><td>${item.person||''}</td>
                 <td><button class="btn btn-xs btn-primary" onclick="editItem('${item.key}','${item.date}','${item.session}','${item.time}','${item.content}','${item.person}')">Sửa</button>
                 <button class="btn btn-xs btn-danger" onclick="deleteItem('${item.key}')">Xóa</button></td></tr>`).join("");
 
-            // Bảng chính 7 ngày
             let html = "";
             let start = new Date(viewDateStr);
             for (let i = 0; i < 7; i++) {
@@ -278,8 +285,6 @@
                     <td>${renderTasks(tasks.filter(t => t.session === "Chiều"))}</td></tr>`;
             }
             document.getElementById("scheduleBody").innerHTML = html;
-            let end = new Date(start); end.setDate(start.getDate()+6);
-            document.getElementById("scheduleDateRange").innerText = `(Từ ngày ${start.getDate()}/${start.getMonth()+1} đến ngày ${end.getDate()}/${end.getMonth()+1}/${end.getFullYear()})`;
         });
     };
 
@@ -304,7 +309,7 @@
             person: document.getElementById("inputPerson").value, creator: currentUser
         };
         const key = document.getElementById("editKey").value;
-        if(!data.date || !data.content) { alert("Thiếu ngày hoặc nội dung!"); return; }
+        if(!data.date || !data.content) { alert("Thiếu dữ liệu!"); return; }
         if(key) update(ref(db, 'schedules/'+key), data).then(cancelEdit);
         else push(ref(db, 'schedules'), data).then(cancelEdit);
     };
@@ -315,7 +320,7 @@
         document.getElementById("inputContent").value = c; document.getElementById("inputPerson").value = p;
         switchTab('manual');
     };
-    window.deleteItem = (k) => confirm("Bạn có chắc muốn xóa công việc này?") && remove(ref(db, 'schedules/'+k));
+    window.deleteItem = (k) => confirm("Xóa?") && remove(ref(db, 'schedules/'+k));
     window.saveGeneralTask = () => set(ref(db, 'generalTask'), document.getElementById("inputGeneralTask").value).then(()=>alert("Đã lưu!"));
     onValue(ref(db, 'generalTask'), (s) => document.getElementById("displayGeneralTask").innerText = s.val() || "LỊCH TRƯỜNG");
 
