@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lich Cong Tac - THPT So 1 Tran Phu</title>
+    <title>Lịch Công Tác - THPT Số 1 Trần Phú</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -36,7 +36,6 @@
         #adminPanel { display: none; background: #fff; padding: 20px; border: 2px dashed #0d6efd; border-radius: 10px; margin-top: 20px; }
         .nav-tabs .nav-link.active { font-weight: bold; color: #0d6efd; border-bottom: 3px solid #0d6efd; }
         
-        /* Table data management */
         .table-manage { font-size: 14px; }
         .btn-xs { padding: 1px 5px; font-size: 12px; }
 
@@ -55,82 +54,82 @@
 <div class="container">
     <div class="header-top">
         <div class="header-left">
-            <h4>SO GIAO DUC VA DAO TAO DAK LAK</h4>
-            <h5>TRUONG THPT SO 1 TRAN PHU</h5>
+            <h4>SỞ GIÁO DỤC VÀ ĐÀO TẠO ĐẮK LẮK</h4>
+            <h5>TRƯỜNG THPT SỐ 1 TRẦN PHÚ</h5>
         </div>
         <div class="header-right">
-            <h4>CONG HOA XA HOI CHU NGHIA VIET NAM</h4>
-            <h5>Doc lap - Tu do - Hanh phuc</h5>
+            <h4>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</h4>
+            <h5>Độc lập - Tự do - Hạnh phúc</h5>
         </div>
     </div>
 
-    <h2 class="main-title">LICH LAM VIEC</h2>
+    <h2 class="main-title">LỊCH LÀM VIỆC</h2>
     <div id="scheduleDateRange" class="date-range-display"></div>
 
     <table class="schedule-table">
         <thead>
-            <tr><th>THU</th><th>NGAY</th><th style="width: 40%;">BUOI SANG</th><th style="width: 40%;">BUOI CHIEU</th></tr>
-            <tr><td colspan="4" class="general-task" id="displayGeneralTask">Dang tai cong viec chung...</td></tr>
+            <tr><th>THỨ</th><th>NGÀY</th><th style="width: 40%;">BUỔI SÁNG</th><th style="width: 40%;">BUỔI CHIỀU</th></tr>
+            <tr><td colspan="4" class="general-task" id="displayGeneralTask">Đang tải công việc chung...</td></tr>
         </thead>
-        <tbody id="scheduleBody"><tr><td colspan="4" class="text-center p-3">Dang tai du lieu...</td></tr></tbody>
+        <tbody id="scheduleBody"><tr><td colspan="4" class="text-center p-3">Đang tải dữ liệu...</td></tr></tbody>
     </table>
 
     <div class="control-bar no-print">
         <div class="row align-items-center">
             <div class="col-md-5">
                 <div class="input-group">
-                    <span class="input-group-text fw-bold bg-white"><i class="far fa-calendar-alt text-primary"></i>&nbsp; Xem tu ngay:</span>
+                    <span class="input-group-text fw-bold bg-white"><i class="far fa-calendar-alt text-primary"></i>&nbsp; Xem từ ngày:</span>
                     <input type="date" id="viewDate" class="form-control" onchange="loadSchedule()">
                 </div>
             </div>
             <div class="col-md-7 text-end">
-                <button class="btn btn-secondary me-2" onclick="window.print()"><i class="fas fa-print"></i> In Lich</button>
-                <button class="btn btn-danger" onclick="toggleAdmin()"><i class="fas fa-user-cog"></i> Quan tri</button>
+                <button class="btn btn-secondary me-2" onclick="window.print()"><i class="fas fa-print"></i> In Lịch</button>
+                <button class="btn btn-danger" onclick="toggleAdmin()"><i class="fas fa-user-cog"></i> Quản trị</button>
             </div>
         </div>
     </div>
 
     <div id="adminPanel" class="no-print">
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="text-primary m-0"><i class="fas fa-tools"></i> QUAN LY LICH CONG TAC</h5>
-            <button class="btn btn-sm btn-outline-danger" onclick="document.getElementById('adminPanel').style.display='none'">Dong</button>
+            <h5 class="text-primary m-0"><i class="fas fa-tools"></i> QUẢN LÝ LỊCH CÔNG TÁC</h5>
+            <button class="btn btn-sm btn-outline-danger" onclick="document.getElementById('adminPanel').style.display='none'">Đóng</button>
         </div>
 
         <ul class="nav nav-tabs mb-3">
-            <li class="nav-item"><button class="nav-link active" onclick="switchTab('general')">1. Cong Viec Chung</button></li>
-            <li class="nav-item"><button class="nav-link" onclick="switchTab('manual')">2. Nhap Lich</button></li>
-            <li class="nav-item"><button class="nav-link" onclick="switchTab('excel')">3. Nhap tu Excel</button></li>
-            <li class="nav-item"><button class="nav-link" onclick="switchTab('list')">4. Tat ca du lieu</button></li>
+            <li class="nav-item"><button class="nav-link active" onclick="switchTab('general')">1. Công Việc Chung</button></li>
+            <li class="nav-item"><button class="nav-link" onclick="switchTab('manual')">2. Nhập Lịch</button></li>
+            <li class="nav-item"><button class="nav-link" onclick="switchTab('excel')">3. Nhập từ Excel</button></li>
+            <li class="nav-item"><button class="nav-link" onclick="switchTab('list')">4. Tất cả dữ liệu</button></li>
         </ul>
 
         <div id="tabGeneral">
             <div class="input-group">
-                <span class="input-group-text fw-bold">Noi dung:</span>
-                <input type="text" id="inputGeneralTask" class="form-control" placeholder="Nhap noi dung...">
-                <button class="btn btn-warning fw-bold" onclick="saveGeneralTask()">Luu Thay Doi</button>
+                <span class="input-group-text fw-bold">Nội dung:</span>
+                <input type="text" id="inputGeneralTask" class="form-control" placeholder="Nhập nội dung...">
+                <button class="btn btn-warning fw-bold" onclick="saveGeneralTask()">Lưu Thay Đổi</button>
             </div>
         </div>
 
         <div id="tabManual" style="display: none;">
             <div class="row g-3">
                 <input type="hidden" id="editKey">
-                <div class="col-md-3"><label class="fw-bold">Ngay:</label><input type="date" id="inputDate" class="form-control"></div>
-                <div class="col-md-3"><label class="fw-bold">Buoi:</label><select id="inputSession" class="form-select"><option value="Sáng">Buoi Sang</option><option value="Chiều">Buoi Chieu</option></select></div>
-                <div class="col-md-3"><label class="fw-bold">Gio:</label><input type="text" id="inputTime" class="form-control"></div>
-                <div class="col-md-3"><label class="fw-bold">Nguoi thuc hien:</label><input type="text" id="inputPerson" class="form-control"></div>
-                <div class="col-12"><label class="fw-bold">Noi dung:</label><input type="text" id="inputContent" class="form-control" placeholder="Nhap noi dung..."></div>
+                <div class="col-md-3"><label class="fw-bold">Ngày:</label><input type="date" id="inputDate" class="form-control"></div>
+                <div class="col-md-3"><label class="fw-bold">Buổi:</label><select id="inputSession" class="form-select"><option value="Sáng">Buổi Sáng</option><option value="Chiều">Buổi Chiều</option></select></div>
+                <div class="col-md-3"><label class="fw-bold">Giờ:</label><input type="text" id="inputTime" class="form-control"></div>
+                <div class="col-md-3"><label class="fw-bold">Người thực hiện:</label><input type="text" id="inputPerson" class="form-control"></div>
+                <div class="col-12"><label class="fw-bold">Nội dung:</label><input type="text" id="inputContent" class="form-control" placeholder="Nhập nội dung..."></div>
                 <div class="col-12 text-center mt-3">
-                    <button id="btnSaveManual" class="btn btn-success px-4" onclick="addSchedule()"><i class="fas fa-save"></i> LUU LICH</button>
-                    <button id="btnCancelEdit" class="btn btn-secondary px-4" style="display:none" onclick="cancelEdit()">HUY</button>
+                    <button id="btnSaveManual" class="btn btn-success px-4" onclick="addSchedule()"><i class="fas fa-save"></i> LƯU LỊCH</button>
+                    <button id="btnCancelEdit" class="btn btn-secondary px-4" style="display:none" onclick="cancelEdit()">HỦY</button>
                 </div>
             </div>
         </div>
 
         <div id="tabExcel" style="display: none;">
             <div class="row align-items-end">
-                <div class="col-md-4"><button class="btn btn-outline-primary w-100" onclick="downloadSample()"><i class="fas fa-download"></i> Tai File Mau</button></div>
-                <div class="col-md-6"><label class="fw-bold">Chon file Excel:</label><input type="file" id="excelFile" class="form-control" accept=".xlsx, .xls"></div>
-                <div class="col-md-2"><button class="btn btn-success w-100" onclick="processExcel()"><i class="fas fa-upload"></i> Nhap</button></div>
+                <div class="col-md-4"><button class="btn btn-outline-primary w-100" onclick="downloadSample()"><i class="fas fa-download"></i> Tải File Mẫu</button></div>
+                <div class="col-md-6"><label class="fw-bold">Chọn file Excel:</label><input type="file" id="excelFile" class="form-control" accept=".xlsx, .xls"></div>
+                <div class="col-md-2"><button class="btn btn-success w-100" onclick="processExcel()"><i class="fas fa-upload"></i> Nhập</button></div>
             </div>
         </div>
 
@@ -139,7 +138,7 @@
                 <table class="table table-sm table-bordered table-manage">
                     <thead class="table-dark">
                         <tr>
-                            <th>Ngay</th><th>Buoi</th><th>Gio</th><th>Noi dung</th><th>Nguoi</th><th>Thao tac</th>
+                            <th>Ngày</th><th>Buổi</th><th>Giờ</th><th>Nội dung</th><th>Người</th><th>Thao tác</th>
                         </tr>
                     </thead>
                     <tbody id="manageTableBody"></tbody>
@@ -149,8 +148,8 @@
     </div>
 
     <div class="footer-copyright no-print">
-        © 2026 Ban quyen thuoc ve Truong THPT So 1 Tran Phu - Dak Lak<br>
-        Phat trien boi: <b>Tran Hong Dan</b> - Email: tranhongdan@tranphudlk.edu.vn
+        © 2026 Bản quyền thuộc về Trường THPT Số 1 Trần Phú - Đắk Lắk<br>
+        Phát triển bởi: <b>Trần Hồng Dân</b> - Email: tranhongdan@tranphudlk.edu.vn
     </div>
 </div>
 
@@ -171,7 +170,6 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    // --- UTILS ---
     function normalizeDate(input) {
         if (!input) return "";
         if (typeof input === 'number') {
@@ -192,9 +190,8 @@
         if (!numbers) return 9999;
         return parseInt(numbers[0]) * 60 + (numbers[1] ? parseInt(numbers[1]) : 0);
     }
-    const getDayName = (i) => ["Chu Nhat", "Thu Hai", "Thu Ba", "Thu Tu", "Thu Nam", "Thu Sau", "Thu Bay"][i];
+    const getDayName = (i) => ["Chủ Nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"][i];
 
-    // --- UI NAVIGATION ---
     window.switchTab = function(tabName) {
         document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
         ['General', 'Manual', 'Excel', 'List'].forEach(t => document.getElementById('tab' + t).style.display = 'none');
@@ -203,20 +200,19 @@
     };
 
     window.toggleAdmin = function() {
-        if (prompt("Nhap mat khau quan tri:") === "123456") {
+        if (prompt("Nhập mật khẩu quản trị:") === "123456") {
             document.getElementById("adminPanel").style.display = "block";
-        } else { alert("Sai mat khau!"); }
+        } else { alert("Sai mật khẩu!"); }
     };
 
-    // --- CORE LOGIC ---
     onValue(ref(db, 'generalTask'), (snapshot) => {
         const val = snapshot.val();
-        document.getElementById("displayGeneralTask").innerText = val || "CONG VIEC CHUNG: DAY VA HOC THEO THOI KHOA BIEU";
+        document.getElementById("displayGeneralTask").innerText = val || "CÔNG VIỆC CHUNG: DẠY VÀ HỌC THEO THỜI KHÓA BIỂU";
         document.getElementById("inputGeneralTask").value = val || "";
     });
 
     window.saveGeneralTask = function() {
-        set(ref(db, 'generalTask'), document.getElementById("inputGeneralTask").value).then(() => alert("Da cap nhat!"));
+        set(ref(db, 'generalTask'), document.getElementById("inputGeneralTask").value).then(() => alert("Đã cập nhật!"));
     };
 
     window.addSchedule = function() {
@@ -228,24 +224,23 @@
             content: document.getElementById("inputContent").value,
             person: document.getElementById("inputPerson").value
         };
-        if(!data.date || !data.content) { alert("Thieu thong tin!"); return; }
-
+        if(!data.date || !data.content) { alert("Thiếu thông tin!"); return; }
         if(key) {
-            update(ref(db, 'schedules/' + key), data).then(() => { alert("Da cap nhat!"); cancelEdit(); });
+            update(ref(db, 'schedules/' + key), data).then(() => { alert("Đã cập nhật!"); cancelEdit(); });
         } else {
-            push(ref(db, 'schedules'), data).then(() => { alert("Da luu!"); cancelEdit(); });
+            push(ref(db, 'schedules'), data).then(() => { alert("Đã lưu!"); cancelEdit(); });
         }
     };
 
     window.cancelEdit = function() {
         document.getElementById("editKey").value = "";
         document.getElementById("inputContent").value = "";
-        document.getElementById("btnSaveManual").innerHTML = '<i class="fas fa-save"></i> LUU LICH';
+        document.getElementById("btnSaveManual").innerHTML = '<i class="fas fa-save"></i> LƯU LỊCH';
         document.getElementById("btnCancelEdit").style.display = "none";
     };
 
     window.deleteItem = function(key) {
-        if(confirm("Ban co chac muon xoa?")) remove(ref(db, 'schedules/' + key));
+        if(confirm("Bạn có chắc muốn xóa?")) remove(ref(db, 'schedules/' + key));
     };
 
     window.editItem = function(key, date, session, time, content, person) {
@@ -255,13 +250,12 @@
         document.getElementById("inputTime").value = time;
         document.getElementById("inputContent").value = content;
         document.getElementById("inputPerson").value = person;
-        document.getElementById("btnSaveManual").innerHTML = '<i class="fas fa-edit"></i> CAP NHAT';
+        document.getElementById("btnSaveManual").innerHTML = '<i class="fas fa-edit"></i> CẬP NHẬT';
         document.getElementById("btnCancelEdit").style.display = "inline-block";
         switchTab('manual');
         document.querySelectorAll('.nav-link')[1].click();
     };
 
-    // --- DATA LOADING ---
     window.loadSchedule = function() {
         const viewDateStr = document.getElementById("viewDate").value;
         if(!viewDateStr) return;
@@ -269,22 +263,27 @@
         
         onValue(ref(db, 'schedules'), (snapshot) => {
             const allData = [];
-            const manageHtml = [];
             snapshot.forEach(child => {
                 const item = child.val();
                 item.key = child.key;
                 allData.push(item);
-                manageHtml.push(`<tr>
-                    <td>${item.date}</td><td>${item.session}</td><td>${item.time}</td>
-                    <td>${item.content}</td><td>${item.person}</td>
-                    <td>
-                        <button class="btn btn-xs btn-primary" onclick="editItem('${item.key}','${item.date}','${item.session}','${item.time}','${item.content}','${item.person}')">Sua</button>
-                        <button class="btn btn-xs btn-danger" onclick="deleteItem('${item.key}')">Xoa</button>
-                    </td>
-                </tr>`);
             });
 
-            document.getElementById("manageTableBody").innerHTML = manageHtml.reverse().join("");
+            // Sắp xếp dữ liệu tab 4 theo thời gian
+            const sortedData = [...allData].sort((a, b) => new Date(a.date) - new Date(b.date));
+            const manageHtml = sortedData.map(item => {
+                const d = new Date(item.date);
+                const dateDisplay = `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
+                return `<tr>
+                    <td>${dateDisplay}</td><td>${item.session}</td><td>${item.time}</td>
+                    <td>${item.content}</td><td>${item.person}</td>
+                    <td>
+                        <button class="btn btn-xs btn-primary" onclick="editItem('${item.key}','${item.date}','${item.session}','${item.time}','${item.content}','${item.person}')">Sửa</button>
+                        <button class="btn btn-xs btn-danger" onclick="deleteItem('${item.key}')">Xóa</button>
+                    </td>
+                </tr>`;
+            });
+            document.getElementById("manageTableBody").innerHTML = manageHtml.join("");
 
             let html = "";
             for (let i = 0; i < 7; i++) {
@@ -302,7 +301,7 @@
             }
             document.getElementById("scheduleBody").innerHTML = html;
             let endDate = new Date(startDate); endDate.setDate(startDate.getDate() + 6);
-            document.getElementById("scheduleDateRange").innerText = `(Tu ngay ${startDate.getDate()}/${startDate.getMonth()+1} den ngay ${endDate.getDate()}/${endDate.getMonth()+1}/${endDate.getFullYear()})`;
+            document.getElementById("scheduleDateRange").innerText = `(Từ ngày ${startDate.getDate()}/${startDate.getMonth()+1} đến ngày ${endDate.getDate()}/${endDate.getMonth()+1}/${endDate.getFullYear()})`;
         });
     };
 
@@ -311,7 +310,6 @@
             .map(t => `<div class="task-item">${t.time?`<span class="task-time">${t.time}:</span>`:""} ${t.content} ${t.person?`<span class="task-person">(${t.person})</span>`:""}</div>`).join("");
     }
 
-    // Excel & Init
     window.processExcel = function() {
         const file = document.getElementById('excelFile').files[0];
         if(!file) return;
@@ -323,7 +321,7 @@
                 let d = normalizeDate(row[0]);
                 if(d && row[3]) push(ref(db, 'schedules'), {date:d, session:row[1]||"Sáng", time:row[2]||"", content:row[3], person:row[4]||""});
             });
-            alert("Da nhap xong!");
+            alert("Đã nhập xong!");
         };
         reader.readAsArrayBuffer(file);
     };
