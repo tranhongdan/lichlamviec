@@ -12,40 +12,69 @@
         body { font-family: 'Times New Roman', Times, serif; background-color: #f4f6f9; color: #000; }
         .container { max-width: 1200px; background: white; padding: 40px 30px; margin-top: 20px; margin-bottom: 50px; box-shadow: 0 0 15px rgba(0,0,0,0.1); }
         
-        /* HEADER */
+        /* --- HEADER CHUAN QUOC HIEU TIEU NGU --- */
         .header-top { display: flex; justify-content: space-between; text-align: center; margin-bottom: 15px; }
+        
+        /* Ben trai: So & Truong */
         .header-left h4 { margin: 0; font-size: 15px; text-transform: uppercase; font-weight: normal; }
         .header-left h5 { margin: 0; font-size: 15px; font-weight: bold; text-decoration: underline; margin-top: 5px;}
-        .header-right h4 { margin: 0; font-size: 15px; text-transform: uppercase; font-weight: bold; }
-        .header-right h5 { margin: 0; font-size: 15px; font-weight: bold; font-style: normal; margin-top: 5px; }
         
+        /* Ben phai: Quoc hieu & Tieu ngu */
+        .header-right h4 { 
+            margin: 0; 
+            font-size: 15px; 
+            text-transform: uppercase; 
+            font-weight: bold; 
+        }
+        .header-right h5 { 
+            margin: 0; 
+            font-size: 15px; 
+            font-weight: bold; 
+            font-style: normal; 
+            margin-top: 5px; 
+        }
+        
+        /* Tieu de Lich */
         .main-title { text-align: center; color: #0d6efd; text-transform: uppercase; font-weight: bold; margin: 25px 0 5px 0; font-size: 24px; }
         .date-range-display { text-align: center; font-style: italic; margin-bottom: 20px; font-size: 16px; color: #333; }
 
-        /* TABLE */
+        /* Bang */
         .schedule-table { width: 100%; border-collapse: collapse; border: 1px solid black; }
         .schedule-table th, .schedule-table td { border: 1px solid black; padding: 8px; vertical-align: top; font-size: 15px; }
         .schedule-table thead th { background-color: #d1e7dd; text-align: center; vertical-align: middle; font-weight: bold; text-transform: uppercase; }
         .col-thu, .col-ngay { width: 10%; text-align: center; vertical-align: middle !important; font-weight: bold; }
         .col-thu { color: #0056b3; }
         
-        .general-task { color: red; font-weight: bold; text-align: center; text-transform: uppercase; padding: 10px; background-color: #fff3cd; font-size: 16px; }
+        /* Cong viec chung */
+        .general-task { 
+            color: red; 
+            font-weight: bold; 
+            text-align: center; 
+            text-transform: uppercase; 
+            padding: 10px; 
+            background-color: #fff3cd;
+            font-size: 16px;
+        }
 
         .task-item { margin-bottom: 8px; border-bottom: 1px dashed #ccc; padding-bottom: 5px; }
         .task-item:last-child { border-bottom: none; }
         .task-time { font-weight: bold; color: #333; margin-right: 5px; }
         .task-person { font-style: italic; color: #555; display: block; font-size: 0.9em; margin-top: 2px;}
 
-        /* ADMIN & CONTROL */
+        /* Control Bar */
         .control-bar { margin-top: 30px; padding: 20px; background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; }
+        
+        /* Admin Panel */
         #adminPanel { display: none; background: #fff; padding: 20px; border: 2px dashed #0d6efd; border-radius: 10px; margin-top: 20px; }
         .nav-tabs .nav-link.active { font-weight: bold; color: #0d6efd; border-bottom: 3px solid #0d6efd; }
-        
+
         .footer-copyright { margin-top: 30px; text-align: center; font-size: 13px; color: #666; border-top: 1px solid #eee; padding-top: 15px; }
         
         @media print {
             .no-print { display: none !important; }
             .container { box-shadow: none; margin: 0; padding: 0; max-width: 100%; width: 100%; }
+            .col-thu { color: black; }
+            .main-title { color: black; }
         }
     </style>
 </head>
@@ -69,7 +98,7 @@
     <table class="schedule-table">
         <thead>
             <tr><th>THỨ</th><th>NGÀY</th><th style="width: 40%;">BUỔI SÁNG</th><th style="width: 40%;">BUỔI CHIỀU</th></tr>
-            <tr><td colspan="4" class="general-task" id="displayGeneralTask">Loading...</td></tr>
+            <tr><td colspan="4" class="general-task" id="displayGeneralTask">Đang tải công việc chung...</td></tr>
         </thead>
         <tbody id="scheduleBody"><tr><td colspan="4" class="text-center p-3">Đang tải dữ liệu...</td></tr></tbody>
     </table>
@@ -97,16 +126,16 @@
 
         <ul class="nav nav-tabs mb-3">
             <li class="nav-item"><button class="nav-link active" onclick="switchTab('general')">1. Công Việc Chung</button></li>
-            <li class="nav-item"><button class="nav-link" onclick="switchTab('manual')">2. Nhập Thủ Công</button></li>
-            <li class="nav-item"><button class="nav-link" onclick="switchTab('excel')">3. Nhập Excel</button></li>
-            <li class="nav-item"><button class="nav-link text-danger" onclick="switchTab('reset')">4. Xóa Dữ Liệu</button></li>
+            <li class="nav-item"><button class="nav-link" onclick="switchTab('manual')">2. Nhập Lịch (Thủ Công)</button></li>
+            <li class="nav-item"><button class="nav-link" onclick="switchTab('excel')">3. Nhập Lịch (Excel)</button></li>
         </ul>
 
         <div id="tabGeneral">
+            <div class="alert alert-warning"><i class="fas fa-bullhorn"></i> Dòng chữ đỏ dưới tiêu đề.</div>
             <div class="input-group">
                 <span class="input-group-text fw-bold">Nội dung:</span>
-                <input type="text" id="inputGeneralTask" class="form-control">
-                <button class="btn btn-warning fw-bold" onclick="saveGeneralTask()">Lưu</button>
+                <input type="text" id="inputGeneralTask" class="form-control" placeholder="Nhập nội dung...">
+                <button class="btn btn-warning fw-bold" onclick="saveGeneralTask()">Lưu Thay Đổi</button>
             </div>
         </div>
 
@@ -122,22 +151,13 @@
         </div>
 
         <div id="tabExcel" style="display: none;">
-            <div class="alert alert-info py-2">
-                <i class="fas fa-info-circle"></i> Thứ tự cột: <b>Ngày | Buổi | Giờ | Nội Dung | Người Thực Hiện</b><br>
-                <small>(*Code hỗ trợ gộp ô ngày: Nếu ô ngày trống, sẽ tự lấy ngày của dòng trên)</small>
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> Hệ thống hỗ trợ file Excel có <b>Gộp ô (Merge Cells)</b> ở cột Ngày.
             </div>
             <div class="row align-items-end">
                 <div class="col-md-4"><button class="btn btn-outline-primary w-100" onclick="downloadSample()"><i class="fas fa-download"></i> Tải File Mẫu</button></div>
-                <div class="col-md-6"><input type="file" id="excelFile" class="form-control" accept=".xlsx, .xls"></div>
+                <div class="col-md-6"><label class="fw-bold">Chọn file Excel:</label><input type="file" id="excelFile" class="form-control" accept=".xlsx, .xls"></div>
                 <div class="col-md-2"><button class="btn btn-success w-100" onclick="processExcel()"><i class="fas fa-upload"></i> Nhập</button></div>
-            </div>
-        </div>
-
-        <div id="tabReset" style="display: none; text-align: center;">
-            <div class="alert alert-danger">
-                <h5 class="fw-bold"><i class="fas fa-exclamation-triangle"></i> CẢNH BÁO QUAN TRỌNG</h5>
-                <p>Hành động này sẽ xóa toàn bộ lịch công tác hiện có trên hệ thống.</p>
-                <button class="btn btn-danger btn-lg" onclick="clearAllData()"><i class="fas fa-trash"></i> XÓA SẠCH DỮ LIỆU CŨ</button>
             </div>
         </div>
     </div>
@@ -150,7 +170,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-    import { getDatabase, ref, push, set, remove, onValue } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+    import { getDatabase, ref, push, set, onValue } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyBZ7HZoLwwIO5P42Ywy_E39bxQArDQaPMo",
@@ -165,13 +185,12 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    // --- HÀM XỬ LÝ DATE ---
+    // --- HAM XU LY NGAY ---
     function normalizeDate(input) {
         if (input === undefined || input === null || input === "") return "";
-        let str = input.toString().trim();
         
-        // Excel Serial
-        if (typeof input === 'number' || !isNaN(input)) {
+        // 1. NEU LA SO (Excel Serial Date)
+        if (typeof input === 'number') {
             const dateInfo = window.XLSX.SSF.parse_date_code(input);
             if (dateInfo) {
                 let y = dateInfo.y;
@@ -181,48 +200,45 @@
             }
         }
         
-        // Text dd/mm/yyyy
+        // 2. NEU LA CHU
+        let str = input.toString().trim();
         if (str.includes('/')) {
             const parts = str.split('/');
-            if (parts.length >= 2) {
-                let d = parts[0].trim().padStart(2, '0');
-                let m = parts[1].trim().padStart(2, '0');
-                let y = (parts[2] || new Date().getFullYear()).toString().trim();
-                if (y.length === 2) y = "20" + y; 
+            if (parts.length === 3) {
+                let d = parts[0].padStart(2, '0');
+                let m = parts[1].padStart(2, '0');
+                let y = parts[2];
+                if (y.length === 2) y = "20" + y;
                 return `${y}-${m}-${d}`;
             }
         }
-        
-        if (str.match(/^\d{4}-\d{2}-\d{2}$/)) return str;
+        if (str.includes('-') && str.length >= 10) return str;
         return "";
     }
 
-    function getSessionType(str) {
-        if (!str) return "Sáng";
-        let s = str.toString().toLowerCase().trim().normalize('NFC');
-        if (s.includes("chi") || s.includes("ch") || s === "c") return "Chiều";
-        return "Sáng";
-    }
-
     function convertToMinutes(timeStr) {
-        if (!timeStr) return 9999;
-        let numbers = timeStr.toString().match(/\d+/g);
+        if (!timeStr || typeof timeStr !== 'string' || timeStr.trim() === "") return 9999;
+        let numbers = timeStr.match(/\d+/g);
         if (!numbers) return 9999;
-        return parseInt(numbers[0]) * 60 + (numbers[1] ? parseInt(numbers[1]) : 0);
+        let h = parseInt(numbers[0]);
+        let m = numbers[1] ? parseInt(numbers[1]) : 0;
+        return h * 60 + m;
     }
-
+    function smartSort(a, b) { return convertToMinutes(a.time) - convertToMinutes(b.time); }
     function getMonday(d) {
         d = new Date(d);
-        var day = d.getDay(), diff = d.getDate() - day + (day == 0 ? -6 : 1);
+        var day = d.getDay();
+        var diff = d.getDate() - day + (day == 0 ? -6 : 1);
         return new Date(d.setDate(diff));
     }
-    
     function getDayName(i) { return ["Chủ Nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"][i]; }
 
-    // --- UI LOGIC ---
+    // --- LOGIC UI ---
     window.switchTab = function(tabName) {
         document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
-        document.querySelectorAll('[id^="tab"]').forEach(el => el.style.display = 'none');
+        document.getElementById('tabGeneral').style.display = 'none';
+        document.getElementById('tabManual').style.display = 'none';
+        document.getElementById('tabExcel').style.display = 'none';
         document.getElementById('tab' + tabName.charAt(0).toUpperCase() + tabName.slice(1)).style.display = 'block';
         event.target.classList.add('active');
     }
@@ -234,15 +250,17 @@
         } else { alert("Sai mật khẩu!"); }
     };
 
-    // --- FIREBASE LOGIC ---
-    onValue(ref(db, 'generalTask'), (snap) => {
-        document.getElementById("displayGeneralTask").innerText = snap.val() || "CÔNG VIỆC CHUNG: DẠY VÀ HỌC THEO THỜI KHÓA BIỂU";
-        document.getElementById("inputGeneralTask").value = snap.val() || "";
+    // --- LOGIC DU LIEU ---
+    onValue(ref(db, 'generalTask'), (snapshot) => {
+        const val = snapshot.val();
+        document.getElementById("displayGeneralTask").innerText = val ? val : "CÔNG VIỆC CHUNG: DẠY VÀ HỌC THEO THỜI KHÓA BIỂU";
+        document.getElementById("inputGeneralTask").value = val ? val : "";
     });
 
     window.saveGeneralTask = function() {
-        set(ref(db, 'generalTask'), document.getElementById("inputGeneralTask").value)
-            .then(() => alert("Đã lưu công việc chung!"));
+        const content = document.getElementById("inputGeneralTask").value;
+        if (!content) { alert("Không được để trống!"); return; }
+        set(ref(db, 'generalTask'), content).then(() => { alert("Đã cập nhật!"); });
     }
 
     window.addSchedule = function() {
@@ -251,30 +269,17 @@
         const time = document.getElementById("inputTime").value;
         const content = document.getElementById("inputContent").value;
         const person = document.getElementById("inputPerson").value;
-        
         if(!date || !content) { alert("Thiếu ngày hoặc nội dung!"); return; }
-        
-        push(ref(db, 'schedules'), { 
-            date, 
-            session: getSessionType(session), 
-            time, content: content.trim(), person 
-        }).then(() => { alert("Đã lưu!"); document.getElementById("inputContent").value = ""; });
+        push(ref(db, 'schedules'), { date, session, time, content, person })
+        .then(() => { alert("Đã lưu!"); document.getElementById("inputContent").value = ""; });
     };
-
-    window.clearAllData = function() {
-        if(confirm("Bạn có chắc chắn muốn XÓA TOÀN BỘ lịch không? Dữ liệu sẽ mất vĩnh viễn!")) {
-            remove(ref(db, 'schedules')).then(() => {
-                alert("Đã xóa sạch dữ liệu cũ. Hãy nhập lại file Excel!");
-                document.getElementById("scheduleBody").innerHTML = `<tr><td colspan="4" class="text-center p-3">Chưa có dữ liệu</td></tr>`;
-            }).catch(e => alert("Lỗi: " + e.message));
-        }
-    }
 
     window.downloadSample = function() {
         const ws_data = [
             ["Ngay (dd/mm/yyyy)", "Buoi", "Gio", "NoiDung", "NguoiThucHien"],
             ["16/02/2026", "Sáng", "07:00", "Chào cờ đầu tuần", "BGH"],
-            [null, "Chiều", "14:00", "Họp tổ chuyên môn", "Toàn trường"]
+            ["16/02/2026", "Chiều", "14:00", "Họp tổ chuyên môn", "Toàn trường"],
+            ["16/02/2026", "Sáng", "07:00", "Kiểm tra nề nếp", "Đoàn TN"]
         ];
         const ws = XLSX.utils.aoa_to_sheet(ws_data);
         const wb = XLSX.utils.book_new();
@@ -282,59 +287,54 @@
         XLSX.writeFile(wb, "Mau_Lich_Cong_Tac.xlsx");
     };
 
-    // --- XỬ LÝ EXCEL VỚI LOGIC "FILL DOWN" (TỰ ĐIỀN NGÀY) ---
+    // --- HAM NHAP EXCEL (DA SUA LOI GOP O) ---
     window.processExcel = function() {
         const fileInput = document.getElementById('excelFile');
         if(!fileInput.files.length) { alert("Chưa chọn file!"); return; }
-        
         const reader = new FileReader();
         reader.onload = function(e) {
-            try {
-                const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, {type: 'array'});
-                const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1, raw: true, defval: "" });
-                
-                let success = 0, firstDateFound = "";
-                let lastValidDate = ""; // Biến lưu ngày gần nhất để điền cho ô trống
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, {type: 'array'});
+            
+            // raw: true -> Giu nguyen du lieu goc
+            const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1, raw: true });
+            
+            let count = 0;
+            let lastValidDate = null; // Bien luu ngay cua dong truoc do (ho tro Merge Cell)
 
-                for(let i = 1; i < jsonData.length; i++) {
-                    let row = jsonData[i];
-                    
-                    // 1. Logic Fill Down: Nếu ô ngày có dữ liệu -> dùng nó & lưu lại. Nếu không -> dùng ngày cũ.
-                    let currentRowDate = normalizeDate(row[0]);
-                    
-                    if(currentRowDate) {
-                        lastValidDate = currentRowDate; // Cập nhật ngày mới
-                    } else if (lastValidDate !== "") {
-                        currentRowDate = lastValidDate; // Dùng lại ngày của dòng trên
-                    }
-
-                    // 2. Kiểm tra nội dung
-                    let contentRaw = row[3] ? row[3].toString().trim() : "";
-                    
-                    // Chỉ lưu nếu có Ngày (đã fill) và có Nội dung
-                    if(currentRowDate && contentRaw) {
-                        push(ref(db, 'schedules'), {
-                            date: currentRowDate, 
-                            session: getSessionType(row[1]),
-                            time: row[2] ? row[2].toString().trim() : "", 
-                            content: contentRaw, 
-                            person: row[4] ? row[4].toString().trim() : ""
-                        });
-                        success++;
-                        if(!firstDateFound) firstDateFound = currentRowDate;
-                    }
-                }
+            for(let i = 1; i < jsonData.length; i++) {
+                let row = jsonData[i];
+                let rawDate = row[0];
+                let currentContent = row[3];
                 
-                alert(`Đã nhập thành công ${success} công việc!`);
-                fileInput.value = "";
+                // 1. Xu ly Ngay: Neu dong nay trong ngay, lay ngay cua dong truoc (lastValidDate)
+                let dateStr = normalizeDate(rawDate);
                 
-                if(firstDateFound) {
-                    document.getElementById("viewDate").value = firstDateFound;
-                    loadSchedule();
+                if (dateStr) {
+                    lastValidDate = dateStr; // Cap nhat ngay moi nhat
+                } else if (lastValidDate && (!rawDate)) {
+                    // Neu o ngay trong (do merge cell hoac de trong), dung ngay cu
+                    dateStr = lastValidDate;
                 }
 
-            } catch (err) { alert("Lỗi đọc file: " + err.message); }
+                // Kiem tra hop le
+                if(!dateStr || !currentContent) continue; 
+
+                // 2. Xu ly Buoi (Trim khoang trang thua: "Sáng " -> "Sáng")
+                let sessionRaw = row[1] || "Sáng";
+                let sessionClean = sessionRaw.toString().trim();
+
+                push(ref(db, 'schedules'), {
+                    date: dateStr, 
+                    session: sessionClean, 
+                    time: row[2] ? row[2].toString().trim() : "", 
+                    content: currentContent.toString().trim(), 
+                    person: row[4] ? row[4].toString().trim() : ""
+                });
+                count++;
+            }
+            alert(`Đã nhập thành công ${count} công việc!`);
+            fileInput.value = "";
         };
         reader.readAsArrayBuffer(fileInput.files[0]);
     };
@@ -342,50 +342,37 @@
     window.loadSchedule = function() {
         const viewDateStr = document.getElementById("viewDate").value;
         if(!viewDateStr) return;
-        
-        const [vY, vM, vD] = viewDateStr.split("-").map(Number);
-        const startDateObj = new Date(vY, vM - 1, vD); 
-        
+        const startDate = new Date(viewDateStr);
         onValue(ref(db, 'schedules'), (snapshot) => {
             const allData = [];
             snapshot.forEach(child => allData.push(child.val()));
-            
             let html = "";
-            let startWeekDate = new Date(startDateObj); 
-
             for (let i = 0; i < 7; i++) {
-                let currDate = new Date(startWeekDate);
-                currDate.setDate(startWeekDate.getDate() + i);
-                
-                let yyyy = currDate.getFullYear();
-                let mm = String(currDate.getMonth()+1).padStart(2,'0');
-                let dd = String(currDate.getDate()).padStart(2,'0');
+                let currDate = new Date(startDate);
+                currDate.setDate(startDate.getDate() + i);
+                let yyyy = currDate.getFullYear(), mm = String(currDate.getMonth()+1).padStart(2,'0'), dd = String(currDate.getDate()).padStart(2,'0');
                 let dateKey = `${yyyy}-${mm}-${dd}`;
+                let tasks = allData.filter(t => t.date === dateKey);
                 
-                let tasks = allData.filter(t => t.date && t.date.trim() === dateKey);
-                
+                // Render voi dieu kien loc "Sáng"/"Chiều" chinh xac hon
                 html += `<tr>
                     <td class="col-thu">${getDayName(currDate.getDay())}</td>
                     <td class="col-ngay">${dd}/${mm}/${yyyy}</td>
-                    <td>${renderTaskList(tasks.filter(t => getSessionType(t.session) === "Sáng").sort((a,b) => convertToMinutes(a.time) - convertToMinutes(b.time)))}</td>
-                    <td>${renderTaskList(tasks.filter(t => getSessionType(t.session) === "Chiều").sort((a,b) => convertToMinutes(a.time) - convertToMinutes(b.time)))}</td>
+                    <td>${renderTaskList(tasks.filter(t => t.session === "Sáng").sort(smartSort))}</td>
+                    <td>${renderTaskList(tasks.filter(t => t.session === "Chiều").sort(smartSort))}</td>
                 </tr>`;
             }
             document.getElementById("scheduleBody").innerHTML = html;
-            
-            let endDate = new Date(startWeekDate); endDate.setDate(startWeekDate.getDate() + 6);
-            document.getElementById("scheduleDateRange").innerText = `(Từ ngày ${startDateObj.getDate()}/${startDateObj.getMonth()+1}/${startDateObj.getFullYear()} đến ngày ${endDate.getDate()}/${endDate.getMonth()+1}/${endDate.getFullYear()})`;
+            let endDate = new Date(startDate); endDate.setDate(startDate.getDate() + 6);
+            document.getElementById("scheduleDateRange").innerText = `(Từ ngày ${startDate.getDate()}/${startDate.getMonth()+1}/${startDate.getFullYear()} đến ngày ${endDate.getDate()}/${endDate.getMonth()+1}/${endDate.getFullYear()})`;
         });
     };
 
     function renderTaskList(tasks) {
-        if(tasks.length === 0) return "";
-        return tasks.map(t => `<div class="task-item">${t.time ? `<span class="task-time">${t.time}:</span>` : ""} ${t.content} ${t.person ? `<span class="task-person">(${t.person})</span>` : ""}</div>`).join("");
+        return tasks.map(t => `<div class="task-item">${t.time?`<span class="task-time">${t.time}:</span>`:""} ${t.content} ${t.person?`<span class="task-person">(${t.person})</span>`:""}</div>`).join("");
     }
 
-    const today = new Date();
-    const monday = getMonday(today);
-    document.getElementById("viewDate").value = `${monday.getFullYear()}-${String(monday.getMonth()+1).padStart(2,'0')}-${String(monday.getDate()).padStart(2,'0')}`;
+    document.getElementById("viewDate").valueAsDate = getMonday(new Date());
     loadSchedule();
 </script>
 
