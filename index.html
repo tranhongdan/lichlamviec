@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lịch Công Tác - THPT Số 1 Trần Phú</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <style>
+        body { font-family: 'Times New Roman', Times, serif; background-color: #f4f6f9; color: #000; }
+        .container { max-width: 1200px; background: white; padding: 30px; margin-top: 20px; margin-bottom: 50px; box-shadow: 0 0 15px rgba(0,0,0,0.1); }
+        .header-top { display: flex; justify-content: space-between; text-align: center; margin-bottom: 20px; font-weight: bold; }
+        .header-left h4, .header-right h4 { margin: 0; font-size: 15px; text-transform: uppercase; }
+        .header-left h5 { margin: 0; font-size: 14px; font-weight: bold; text-decoration: underline; margin-top: 3px;}
+        .header-right h5 { margin: 0; font-size: 14px; font-style: italic; margin-top: 3px; font-weight: normal;}
+        .main-title { text-align: center; color: #0d6efd; text-transform: uppercase; font-weight: bold; margin: 25px 0 10px 0; font-size: 22px; }
+        .sub-title { text-align: center; font-size: 16px; font-style: italic; margin-bottom: 20px; }
+        .schedule-table { width: 100%; border-collapse: collapse; border: 1px solid black; }
+        .schedule-table th, .schedule-table td { border: 1px solid black; padding: 8px; vertical-align: top; font-size: 15px; }
+        .schedule-table th { background-color: #d1e7dd; text-align: center; vertical-align: middle; font-weight: bold; text-transform: uppercase; }
+        .col-thu, .col-ngay { width: 10%; text-align: center; vertical-align: middle !important; font-weight: bold; }
+        .col-thu { color: #0056b3; }
+        .general-task { color: red; font-weight: bold; text-align: center; text-transform: uppercase; padding: 8px; background-color: #fff3cd; }
+        .task-item { margin-bottom: 8px; border-bottom: 1px dashed #ccc; padding-bottom: 5px; }
+        .task-item:last-child { border-bottom: none; }
+        .task-time { font-weight: bold; color: #333; margin-right: 5px; }
+        .task-person { font-style: italic; color: #555; display: block; font-size: 0.9em; margin-top: 2px;}
+        #adminPanel { display: none; background: #fff; padding: 20px; border: 2px dashed #0d6efd; border-radius: 10px; margin-top: 20px; }
+        .nav-tabs .nav-link.active { font-weight: bold; color: #0d6efd; border-bottom: 3px solid #0d6efd; }
+        .footer-copyright { margin-top: 30px; text-align: center; font-size: 13px; color: #666; border-top: 1px solid #eee; padding-top: 15px; }
+        @media print {
+            .no-print { display: none !important; }
+            .container { box-shadow: none; margin: 0; padding: 0; max-width: 100%; width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header-top">
+        <div class="header-left">
+            <h4>SỞ GIÁO DỤC VÀ ĐÀO TẠO ĐẮK LẮK</h4>
+            <h5>TRƯỜNG THPT SỐ 1 TRẦN PHÚ</h5>
+        </div>
+        <div class="header-right">
+            <h4>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</h4>
+            <h5>Độc lập - Tự do - Hạnh phúc</h5>
+        </div>
+    </div>
+
+    <div class="row mb-4 no-print align-items-end p-3 bg-light rounded border">
+        <div class="col-md-4">
+            <label class="form-label fw-bold">Chọn ngày xem:</label>
+            <input type="date" id="viewDate" class="form-control">
+        </div>
+        <div class="col-md-4 d-flex gap-2">
+            <button class="btn btn-primary" onclick="loadSchedule()"><i class="fas fa-search"></i> Xem</button>
+            <button class="btn btn-secondary" onclick="window.print()"><i class="fas fa-print"></i> In</button>
+        </div>
+        <div class="col-md-4 text-end">
+            <button class="btn btn-danger" onclick="toggleAdmin()"><i class="fas fa-user-cog"></i> Quản trị</button>
+        </div>
+    </div>
+
+    <div id="adminPanel">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="text-primary m-0"><i class="fas fa-tools"></i> QUẢN LÝ LỊCH CÔNG TÁC</h5>
+            <button class="btn btn-sm btn-outline-danger" onclick="document.getElementById('adminPanel').style.display='none'">Đóng</button>
+        </div>
+
+        <ul class="nav nav-tabs mb-3">
+            <li class="nav-item"><button class="nav-link active" onclick="switchTab('manual')">Nhập Thủ Công</button></li>
+            <li class="nav-item"><button class="nav-link" onclick="switchTab('excel')">Nhập từ Excel</button></li>
+        </ul>
+
+        <div id="tabManual">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="fw-bold">Ngày:</label>
+                    <input type="date" id="inputDate" class="form-control">
+                    <small class="text-muted" style="font-size: 11px;">(Chọn trên lịch)</small>
+                </div>
+                <div class="col-md-3">
+                    <label class="fw-bold">Buổi:</label>
+                    <select id="inputSession" class="form-select">
+                        <option value="Sáng">Buổi Sáng</option>
+                        <option value="Chiều">Buổi Chiều</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="fw-bold">Giờ (VD: 07:30):</label>
+                    <input type="text" id="inputTime" class="form-control">
+                </div>
+                <div class="col-md-3">
+                    <label class="fw-bold">Người thực hiện:</label>
+                    <input type="text" id="inputPerson" class="form-control">
+                </div>
+                <div class="col-12">
+                    <label class="fw-bold">Nội dung:</label>
+                    <input type="text" id="inputContent" class="form-control" placeholder="Nhập nội dung công việc...">
+                </div>
+                <div class="col-12 text-center mt-3">
+                    <button class="btn btn-success px-4" onclick="addSchedule()"><i class="fas fa-save"></i> LƯU DỮ LIỆU</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="tabExcel" style="display: none;">
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> File Excel nhập cột Ngày theo định dạng Việt Nam: <b>dd/mm/yyyy</b> (Ví dụ: 16/02/2026).
+            </div>
+            <div class="row align-items-end">
+                <div class="col-md-4">
+                    <button class="btn btn-outline-primary w-100" onclick="downloadSample()">
+                        <i class="fas fa-download"></i> Tải File Mẫu Mới (.xlsx)
+                    </button>
+                </div>
+                <div class="col-md-6">
+                    <label class="fw-bold">Chọn file Excel:</label>
+                    <input type="file" id="excelFile" class="form-control" accept=".xlsx, .xls">
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-success w-100" onclick="processExcel()">
+                        <i class="fas fa-upload"></i> Nhập
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h2 class="main-title">LỊCH LÀM VIỆC</h2>
+    <div class="sub-title" id="scheduleDateRange"></div>
+
+    <table class="schedule-table">
+        <thead>
+            <tr><th>THỨ</th><th>NGÀY</th><th style="width: 40%;">BUỔI SÁNG</th><th style="width: 40%;">BUỔI CHIỀU</th></tr>
+            <tr><td colspan="4" class="general-task">CÔNG VIỆC CHUNG: DẠY VÀ HỌC THEO THỜI KHÓA BIỂU</td></tr>
+        </thead>
+        <tbody id="scheduleBody"><tr><td colspan="4" class="text-center">Đang tải dữ liệu...</td></tr></tbody>
+    </table>
+
+    <div class="footer-copyright no-print">
+        © 2026 Bản quyền thuộc về Trường THPT Số 1 Trần Phú - Đắk Lắk<br>
+        Phát triển bởi: <b>Trần Hồng Dân</b> - Email: tranhongdan@tranphudlk.edu.vn
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+    import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+
+    // --- CẤU HÌNH CỦA BẠN ---
+    const firebaseConfig = {
+        apiKey: "AIzaSyBZ7HZoLwwIO5P42Ywy_E39bxQArDQaPMo",
+        authDomain: "lichlamviec-f7b69.firebaseapp.com",
+        databaseURL: "https://lichlamviec-f7b69-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "lichlamviec-f7b69",
+        storageBucket: "lichlamviec-f7b69.firebasestorage.app",
+        messagingSenderId: "861156833276",
+        appId: "1:861156833276:web:04574ef63f4ce74e8b6479"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // --- HÀM XỬ LÝ NGÀY THÔNG MINH ---
+    
+    // Hàm này tự động chuyển mọi định dạng (Excel Serial, dd/mm/yyyy) về chuẩn YYYY-MM-DD để lưu trữ
+    function normalizeDate(input) {
+        if (!input) return "";
+        
+        // 1. Nếu là số (Excel Serial Date)
+        if (typeof input === 'number') {
+            const date = new Date(Math.round((input - 25569) * 86400 * 1000));
+            return date.toISOString().split('T')[0];
+        }
+        
+        // 2. Nếu là chuỗi "dd/mm/yyyy" (Việt Nam)
+        if (typeof input === 'string' && input.includes('/')) {
+            const parts = input.trim().split('/');
+            // Nếu đủ 3 phần (ngày/tháng/năm)
+            if (parts.length === 3) {
+                let day = parts[0].padStart(2, '0');
+                let month = parts[1].padStart(2, '0');
+                let year = parts[2];
+                // Kiểm tra xem năm có đủ 4 số không, nếu nhập tắt 26 -> 2026
+                if (year.length === 2) year = "20" + year;
+                return `${year}-${month}-${day}`;
+            }
+        }
+        
+        // 3. Nếu đã là chuẩn YYYY-MM-DD hoặc định dạng khác
+        return input; 
+    }
+
+    function convertToMinutes(timeStr) {
+        if (!timeStr || typeof timeStr !== 'string' || timeStr.trim() === "") return 9999;
+        let numbers = timeStr.match(/\d+/g);
+        if (!numbers) return 9999;
+        let h = parseInt(numbers[0]);
+        let m = numbers[1] ? parseInt(numbers[1]) : 0;
+        return h * 60 + m;
+    }
+
+    function smartSort(a, b) { return convertToMinutes(a.time) - convertToMinutes(b.time); }
+    function getMonday(d) {
+        d = new Date(d);
+        var day = d.getDay();
+        var diff = d.getDate() - day + (day == 0 ? -6 : 1);
+        return new Date(d.setDate(diff));
+    }
+    function getDayName(i) { return ["Chủ Nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"][i]; }
+
+    // --- LOGIC CHÍNH ---
+    window.switchTab = function(tabName) {
+        document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
+        document.getElementById('tabManual').style.display = tabName === 'manual' ? 'block' : 'none';
+        document.getElementById('tabExcel').style.display = tabName === 'excel' ? 'block' : 'none';
+        event.target.classList.add('active');
+    }
+
+    window.toggleAdmin = function() {
+        if (prompt("Nhập mật khẩu quản trị:") === "123456") {
+            document.getElementById("adminPanel").style.display = "block";
+            document.getElementById("adminPanel").scrollIntoView({behavior: "smooth"});
+        } else { alert("Sai mật khẩu!"); }
+    };
+
+    window.addSchedule = function() {
+        const date = document.getElementById("inputDate").value; // Input date luôn trả về YYYY-MM-DD
+        const session = document.getElementById("inputSession").value;
+        const time = document.getElementById("inputTime").value;
+        const content = document.getElementById("inputContent").value;
+        const person = document.getElementById("inputPerson").value;
+
+        if(!date || !content) { alert("Thiếu ngày hoặc nội dung!"); return; }
+
+        push(ref(db, 'schedules'), { date, session, time, content, person })
+        .then(() => { alert("Đã lưu!"); document.getElementById("inputContent").value = ""; });
+    };
+
+    // --- XỬ LÝ EXCEL (ĐÃ CẬP NHẬT ĐỊNH DẠNG VIỆT NAM) ---
+    window.downloadSample = function() {
+        // Dữ liệu mẫu dùng định dạng dd/mm/yyyy
+        const ws_data = [
+            ["Ngay (dd/mm/yyyy)", "Buoi", "Gio", "NoiDung", "NguoiThucHien"],
+            ["16/02/2026", "Sáng", "07:00", "Chào cờ đầu tuần", "BGH"],
+            ["17/02/2026", "Chiều", "14:00", "Họp chuyên môn", "Tổ Toán"],
+            ["18/02/2026", "Sáng", "", "Dạy theo TKB", "GVCN"]
+        ];
+        const ws = XLSX.utils.aoa_to_sheet(ws_data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "MauNhapLieu");
+        XLSX.writeFile(wb, "Mau_Lich_Cong_Tac_VN.xlsx");
+    };
+
+    window.processExcel = function() {
+        const fileInput = document.getElementById('excelFile');
+        if(!fileInput.files.length) { alert("Chưa chọn file!"); return; }
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, {type: 'array'});
+            const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header: 1});
+
+            let count = 0;
+            for(let i = 1; i < jsonData.length; i++) {
+                let row = jsonData[i];
+                if(!row[0] || !row[3]) continue;
+
+                // Chuẩn hóa ngày dd/mm/yyyy -> YYYY-MM-DD
+                let dateStr = normalizeDate(row[0]);
+                
+                push(ref(db, 'schedules'), {
+                    date: dateStr,
+                    session: row[1] || "Sáng",
+                    time: row[2] ? row[2].toString() : "",
+                    content: row[3],
+                    person: row[4] || ""
+                });
+                count++;
+            }
+            alert(`Đã nhập thành công ${count} công việc!`);
+            fileInput.value = "";
+        };
+        reader.readAsArrayBuffer(fileInput.files[0]);
+    };
+
+    window.loadSchedule = function() {
+        const viewDateStr = document.getElementById("viewDate").value;
+        if(!viewDateStr) return;
+        const mondayDate = getMonday(new Date(viewDateStr));
+        
+        onValue(ref(db, 'schedules'), (snapshot) => {
+            const allData = [];
+            snapshot.forEach(child => allData.push(child.val()));
+
+            let html = "";
+            for (let i = 0; i < 7; i++) {
+                let currDate = new Date(mondayDate);
+                currDate.setDate(mondayDate.getDate() + i);
+                let yyyy = currDate.getFullYear(), mm = String(currDate.getMonth()+1).padStart(2,'0'), dd = String(currDate.getDate()).padStart(2,'0');
+                
+                // Tìm kiếm dữ liệu khớp ngày
+                let dateKey = `${yyyy}-${mm}-${dd}`;
+                let tasks = allData.filter(t => t.date === dateKey);
+                
+                html += `<tr>
+                    <td class="col-thu">${getDayName(currDate.getDay())}</td>
+                    <td class="col-ngay">${dd}/${mm}/${yyyy}</td>
+                    <td>${renderTaskList(tasks.filter(t => t.session === "Sáng").sort(smartSort))}</td>
+                    <td>${renderTaskList(tasks.filter(t => t.session === "Chiều").sort(smartSort))}</td>
+                </tr>`;
+            }
+            document.getElementById("scheduleBody").innerHTML = html;
+            
+            let sundayDate = new Date(mondayDate); sundayDate.setDate(mondayDate.getDate() + 6);
+            document.getElementById("scheduleDateRange").innerText = `(Từ ngày ${mondayDate.getDate()}/${mondayDate.getMonth()+1}/${mondayDate.getFullYear()} đến ngày ${sundayDate.getDate()}/${sundayDate.getMonth()+1}/${sundayDate.getFullYear()})`;
+        });
+    };
+
+    function renderTaskList(tasks) {
+        return tasks.map(t => `<div class="task-item">${t.time?`<span class="task-time">${t.time}:</span>`:""} ${t.content} ${t.person?`<span class="task-person">(${t.person})</span>`:""}</div>`).join("");
+    }
+
+    document.getElementById("viewDate").valueAsDate = getMonday(new Date());
+    loadSchedule();
+</script>
+
+</body>
+</html>
