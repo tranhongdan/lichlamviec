@@ -9,7 +9,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         body { font-family: 'Times New Roman', Times, serif; background-color: #f4f6f9; color: #000; }
-        .container { max-width: 1200px; background: white; padding: 40px 30px; margin-top: 20px; margin-bottom: 50px; box-shadow: 0 0 15px rgba(0,0,0,0.1); }
+        .container { max-width: 1250px; background: white; padding: 40px 30px; margin-top: 20px; margin-bottom: 50px; box-shadow: 0 0 15px rgba(0,0,0,0.1); }
         
         .header-top { display: flex; justify-content: space-between; text-align: center; margin-bottom: 15px; }
         .header-left h4 { margin: 0; font-size: 15px; text-transform: uppercase; font-weight: normal; }
@@ -20,21 +20,23 @@
         .main-title { text-align: center; color: #0d6efd; text-transform: uppercase; font-weight: bold; margin: 25px 0 5px 0; font-size: 24px; }
         .date-range-display { text-align: center; font-style: italic; margin-bottom: 20px; font-size: 16px; color: #333; }
         
-        .schedule-table { width: 100%; border-collapse: collapse; border: 1px solid black; }
-        .schedule-table th, .schedule-table td { border: 1px solid black; padding: 8px; vertical-align: top; font-size: 15px; }
+        .schedule-table { width: 100%; border-collapse: collapse; border: 1px solid black; table-layout: fixed; }
+        .schedule-table th, .schedule-table td { border: 1px solid black; padding: 8px; vertical-align: top; font-size: 15px; word-wrap: break-word; }
         .schedule-table thead th { background-color: #d1e7dd; text-align: center; vertical-align: middle; font-weight: bold; text-transform: uppercase; }
-        .col-thu, .col-ngay { width: 10%; text-align: center; vertical-align: middle !important; font-weight: bold; }
-        .col-thu { color: #0056b3; }
+        
+        .col-thu { width: 80px; text-align: center; vertical-align: middle !important; font-weight: bold; color: #0056b3; }
+        .col-ngay { width: 100px; text-align: center; vertical-align: middle !important; font-weight: bold; }
         
         .general-task { color: red; font-weight: bold; text-align: center; text-transform: uppercase; padding: 10px; background-color: #fff3cd; font-size: 16px; }
-        .task-item { margin-bottom: 8px; border-bottom: 1px dashed #ccc; padding-bottom: 5px; }
+        
+        /* CSS cho công việc trên cùng 1 dòng */
+        .task-item { margin-bottom: 4px; padding-bottom: 2px; border-bottom: 1px dashed #eee; line-height: 1.4; }
         .task-item:last-child { border-bottom: none; }
-        .task-time { font-weight: bold; color: #333; margin-right: 5px; }
-        .task-person { font-style: italic; color: #555; display: block; font-size: 0.9em; margin-top: 2px;}
+        .task-time { font-weight: bold; color: #000; }
+        .task-person { font-style: italic; color: #444; margin-left: 4px; }
 
         .control-bar { margin-top: 30px; padding: 20px; background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; }
         #adminPanel { display: none; background: #fff; padding: 20px; border: 2px dashed #0d6efd; border-radius: 10px; margin-top: 20px; }
-        .nav-tabs .nav-link.active { font-weight: bold; color: #0d6efd; border-bottom: 3px solid #0d6efd; }
         
         .table-manage { font-size: 14px; }
         .btn-xs { padding: 1px 5px; font-size: 12px; }
@@ -68,7 +70,12 @@
 
     <table class="schedule-table">
         <thead>
-            <tr><th>THỨ</th><th>NGÀY</th><th style="width: 40%;">BUỔI SÁNG</th><th style="width: 40%;">BUỔI CHIỀU</th></tr>
+            <tr>
+                <th class="col-thu">THỨ</th>
+                <th class="col-ngay">NGÀY</th>
+                <th>BUỔI SÁNG</th>
+                <th>BUỔI CHIỀU</th>
+            </tr>
             <tr><td colspan="4" class="general-task" id="displayGeneralTask">Đang tải công việc chung...</td></tr>
         </thead>
         <tbody id="scheduleBody"><tr><td colspan="4" class="text-center p-3">Đang tải dữ liệu...</td></tr></tbody>
@@ -115,9 +122,9 @@
                 <input type="hidden" id="editKey">
                 <div class="col-md-3"><label class="fw-bold">Ngày:</label><input type="date" id="inputDate" class="form-control"></div>
                 <div class="col-md-3"><label class="fw-bold">Buổi:</label><select id="inputSession" class="form-select"><option value="Sáng">Buổi Sáng</option><option value="Chiều">Buổi Chiều</option></select></div>
-                <div class="col-md-3"><label class="fw-bold">Giờ:</label><input type="text" id="inputTime" class="form-control"></div>
+                <div class="col-md-3"><label class="fw-bold">Giờ:</label><input type="text" id="inputTime" class="form-control" placeholder="VD: 07:00"></div>
                 <div class="col-md-3"><label class="fw-bold">Người thực hiện:</label><input type="text" id="inputPerson" class="form-control"></div>
-                <div class="col-12"><label class="fw-bold">Nội dung:</label><input type="text" id="inputContent" class="form-control" placeholder="Nhập nội dung..."></div>
+                <div class="col-12"><label class="fw-bold">Nội dung:</label><input type="text" id="inputContent" class="form-control" placeholder="Nhập nội dung công việc..."></div>
                 <div class="col-12 text-center mt-3">
                     <button id="btnSaveManual" class="btn btn-success px-4" onclick="addSchedule()"><i class="fas fa-save"></i> LƯU LỊCH</button>
                     <button id="btnCancelEdit" class="btn btn-secondary px-4" style="display:none" onclick="cancelEdit()">HỦY</button>
@@ -134,9 +141,9 @@
         </div>
 
         <div id="tabList" style="display: none;">
-            <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+            <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
                 <table class="table table-sm table-bordered table-manage">
-                    <thead class="table-dark">
+                    <thead class="table-dark sticky-top">
                         <tr>
                             <th>Ngày</th><th>Buổi</th><th>Giờ</th><th>Nội dung</th><th>Người</th><th>Thao tác</th>
                         </tr>
@@ -170,6 +177,7 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
+    // --- HÀM TIỆN ÍCH ---
     function normalizeDate(input) {
         if (!input) return "";
         if (typeof input === 'number') {
@@ -188,8 +196,11 @@
         if (!timeStr) return 9999;
         let numbers = timeStr.match(/\d+/g);
         if (!numbers) return 9999;
-        return parseInt(numbers[0]) * 60 + (numbers[1] ? parseInt(numbers[1]) : 0);
+        let h = parseInt(numbers[0]);
+        let m = numbers[1] ? parseInt(numbers[1]) : 0;
+        return h * 60 + m;
     }
+
     const getDayName = (i) => ["Chủ Nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"][i];
 
     window.switchTab = function(tabName) {
@@ -205,6 +216,7 @@
         } else { alert("Sai mật khẩu!"); }
     };
 
+    // --- XỬ LÝ DỮ LIỆU FIREBASE ---
     onValue(ref(db, 'generalTask'), (snapshot) => {
         const val = snapshot.val();
         document.getElementById("displayGeneralTask").innerText = val || "CÔNG VIỆC CHUNG: DẠY VÀ HỌC THEO THỜI KHÓA BIỂU";
@@ -222,9 +234,10 @@
             session: document.getElementById("inputSession").value,
             time: document.getElementById("inputTime").value,
             content: document.getElementById("inputContent").value,
-            person: document.getElementById("inputPerson").value
+            person: document.getElementById("inputPerson").value,
+            timestamp: Date.now() // Để sắp xếp theo thứ tự nhập nếu ko có giờ
         };
-        if(!data.date || !data.content) { alert("Thiếu thông tin!"); return; }
+        if(!data.date || !data.content) { alert("Thiếu ngày hoặc nội dung!"); return; }
         if(key) {
             update(ref(db, 'schedules/' + key), data).then(() => { alert("Đã cập nhật!"); cancelEdit(); });
         } else {
@@ -235,27 +248,30 @@
     window.cancelEdit = function() {
         document.getElementById("editKey").value = "";
         document.getElementById("inputContent").value = "";
+        document.getElementById("inputTime").value = "";
+        document.getElementById("inputPerson").value = "";
         document.getElementById("btnSaveManual").innerHTML = '<i class="fas fa-save"></i> LƯU LỊCH';
         document.getElementById("btnCancelEdit").style.display = "none";
     };
 
     window.deleteItem = function(key) {
-        if(confirm("Bạn có chắc muốn xóa?")) remove(ref(db, 'schedules/' + key));
+        if(confirm("Bạn có chắc chắn muốn xóa mục này?")) remove(ref(db, 'schedules/' + key));
     };
 
     window.editItem = function(key, date, session, time, content, person) {
         document.getElementById("editKey").value = key;
         document.getElementById("inputDate").value = date;
         document.getElementById("inputSession").value = session;
-        document.getElementById("inputTime").value = time;
+        document.getElementById("inputTime").value = time === "undefined" ? "" : time;
         document.getElementById("inputContent").value = content;
-        document.getElementById("inputPerson").value = person;
+        document.getElementById("inputPerson").value = person === "undefined" ? "" : person;
         document.getElementById("btnSaveManual").innerHTML = '<i class="fas fa-edit"></i> CẬP NHẬT';
         document.getElementById("btnCancelEdit").style.display = "inline-block";
         switchTab('manual');
         document.querySelectorAll('.nav-link')[1].click();
     };
 
+    // --- HIỂN THỊ DỮ LIỆU ---
     window.loadSchedule = function() {
         const viewDateStr = document.getElementById("viewDate").value;
         if(!viewDateStr) return;
@@ -269,14 +285,21 @@
                 allData.push(item);
             });
 
-            // Sắp xếp dữ liệu tab 4 theo thời gian
-            const sortedData = [...allData].sort((a, b) => new Date(a.date) - new Date(b.date));
-            const manageHtml = sortedData.map(item => {
+            // Sắp xếp Tab Quản lý (Tab 4): Theo ngày tăng dần -> Buổi -> Giờ/Thứ tự nhập
+            const sortedManage = [...allData].sort((a, b) => {
+                if (a.date !== b.date) return new Date(a.date) - new Date(b.date);
+                if (a.session !== b.session) return a.session === "Sáng" ? -1 : 1;
+                let timeA = convertToMinutes(a.time), timeB = convertToMinutes(b.time);
+                if (timeA !== timeB) return timeA - timeB;
+                return (a.timestamp || 0) - (b.timestamp || 0);
+            });
+
+            const manageHtml = sortedManage.map(item => {
                 const d = new Date(item.date);
-                const dateDisplay = `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
+                const dateFmt = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
                 return `<tr>
-                    <td>${dateDisplay}</td><td>${item.session}</td><td>${item.time}</td>
-                    <td>${item.content}</td><td>${item.person}</td>
+                    <td>${dateFmt}</td><td>${item.session}</td><td>${item.time || ''}</td>
+                    <td>${item.content}</td><td>${item.person || ''}</td>
                     <td>
                         <button class="btn btn-xs btn-primary" onclick="editItem('${item.key}','${item.date}','${item.session}','${item.time}','${item.content}','${item.person}')">Sửa</button>
                         <button class="btn btn-xs btn-danger" onclick="deleteItem('${item.key}')">Xóa</button>
@@ -285,43 +308,82 @@
             });
             document.getElementById("manageTableBody").innerHTML = manageHtml.join("");
 
+            // Hiển thị Lịch tuần (Bảng chính)
             let html = "";
             for (let i = 0; i < 7; i++) {
                 let currDate = new Date(startDate);
                 currDate.setDate(startDate.getDate() + i);
-                let dateKey = currDate.toISOString().split('T')[0];
+                let y = currDate.getFullYear(), m = String(currDate.getMonth()+1).padStart(2,'0'), d = String(currDate.getDate()).padStart(2,'0');
+                let dateKey = `${y}-${m}-${d}`;
+                let dateDisplay = `${d}/${m}/${y}`;
+                
                 let tasks = allData.filter(t => t.date === dateKey);
                 
                 html += `<tr>
                     <td class="col-thu">${getDayName(currDate.getDay())}</td>
-                    <td class="col-ngay">${currDate.getDate()}/${currDate.getMonth()+1}</td>
+                    <td class="col-ngay">${dateDisplay}</td>
                     <td>${renderTaskList(tasks.filter(t => t.session === "Sáng"))}</td>
                     <td>${renderTaskList(tasks.filter(t => t.session === "Chiều"))}</td>
                 </tr>`;
             }
             document.getElementById("scheduleBody").innerHTML = html;
+            
             let endDate = new Date(startDate); endDate.setDate(startDate.getDate() + 6);
-            document.getElementById("scheduleDateRange").innerText = `(Từ ngày ${startDate.getDate()}/${startDate.getMonth()+1} đến ngày ${endDate.getDate()}/${endDate.getMonth()+1}/${endDate.getFullYear()})`;
+            document.getElementById("scheduleDateRange").innerText = `(Từ ngày ${startDate.getDate()}/${startDate.getMonth()+1}/${startDate.getFullYear()} đến ngày ${endDate.getDate()}/${endDate.getMonth()+1}/${endDate.getFullYear()})`;
         });
     };
 
     function renderTaskList(tasks) {
-        return tasks.sort((a,b) => convertToMinutes(a.time) - convertToMinutes(b.time))
-            .map(t => `<div class="task-item">${t.time?`<span class="task-time">${t.time}:</span>`:""} ${t.content} ${t.person?`<span class="task-person">(${t.person})</span>`:""}</div>`).join("");
+        // Sắp xếp theo giờ, nếu ko có giờ thì theo timestamp (thứ tự nhập)
+        return tasks.sort((a, b) => {
+            let timeA = convertToMinutes(a.time), timeB = convertToMinutes(b.time);
+            if (timeA !== timeB) return timeA - timeB;
+            return (a.timestamp || 0) - (b.timestamp || 0);
+        })
+        .map(t => {
+            let timeSpan = t.time ? `<span class="task-time">${t.time}:</span>` : "";
+            let personSpan = t.person ? `<span class="task-person">(${t.person})</span>` : "";
+            return `<div class="task-item">${timeSpan} ${t.content}${personSpan}</div>`;
+        }).join("");
     }
+
+    // --- EXCEL & KHỞI TẠO ---
+    window.downloadSample = function() {
+        const ws_data = [
+            ["Ngay (dd/mm/yyyy)", "Buoi", "Gio", "NoiDung", "NguoiThucHien"],
+            ["16/02/2026", "Sáng", "07:00", "Chào cờ đầu tuần", "BGH"]
+        ];
+        const ws = XLSX.utils.aoa_to_sheet(ws_data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "MauNhapLieu");
+        XLSX.writeFile(wb, "Mau_Lich_Cong_Tac.xlsx");
+    };
 
     window.processExcel = function() {
         const file = document.getElementById('excelFile').files[0];
-        if(!file) return;
+        if(!file) { alert("Vui lòng chọn file!"); return; }
         const reader = new FileReader();
         reader.onload = (e) => {
-            const workbook = XLSX.read(new Uint8Array(e.target.result), {type: 'array'});
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, {type: 'array'});
             const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header:1});
-            jsonData.slice(1).forEach(row => {
+            let count = 0;
+            jsonData.slice(1).forEach((row, index) => {
                 let d = normalizeDate(row[0]);
-                if(d && row[3]) push(ref(db, 'schedules'), {date:d, session:row[1]||"Sáng", time:row[2]||"", content:row[3], person:row[4]||""});
+                if(d && row[3]) {
+                    push(ref(db, 'schedules'), {
+                        date: d, 
+                        session: row[1] || "Sáng", 
+                        time: row[2] ? row[2].toString() : "", 
+                        content: row[3], 
+                        person: row[4] || "",
+                        timestamp: Date.now() + index // Đảm bảo thứ tự nhập từ file
+                    });
+                    count++;
+                }
             });
-            alert("Đã nhập xong!");
+            alert(`Đã nhập thành công ${count} công việc!`);
+            document.getElementById('excelFile').value = "";
         };
         reader.readAsArrayBuffer(file);
     };
