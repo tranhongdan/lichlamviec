@@ -11,25 +11,36 @@
     <style>
         body { font-family: 'Times New Roman', Times, serif; background-color: #f4f6f9; color: #000; }
         .container { max-width: 1200px; background: white; padding: 30px; margin-top: 20px; margin-bottom: 50px; box-shadow: 0 0 15px rgba(0,0,0,0.1); }
+        
+        /* Header */
         .header-top { display: flex; justify-content: space-between; text-align: center; margin-bottom: 20px; font-weight: bold; }
         .header-left h4, .header-right h4 { margin: 0; font-size: 15px; text-transform: uppercase; }
         .header-left h5 { margin: 0; font-size: 14px; font-weight: bold; text-decoration: underline; margin-top: 3px;}
         .header-right h5 { margin: 0; font-size: 14px; font-style: italic; margin-top: 3px; font-weight: normal;}
+        
         .main-title { text-align: center; color: #0d6efd; text-transform: uppercase; font-weight: bold; margin: 25px 0 10px 0; font-size: 22px; }
         .sub-title { text-align: center; font-size: 16px; font-style: italic; margin-bottom: 20px; }
+        
+        /* Table */
         .schedule-table { width: 100%; border-collapse: collapse; border: 1px solid black; }
         .schedule-table th, .schedule-table td { border: 1px solid black; padding: 8px; vertical-align: top; font-size: 15px; }
-        .schedule-table th { background-color: #d1e7dd; text-align: center; vertical-align: middle; font-weight: bold; text-transform: uppercase; }
+        .schedule-table thead th { background-color: #d1e7dd; text-align: center; vertical-align: middle; font-weight: bold; text-transform: uppercase; }
         .col-thu, .col-ngay { width: 10%; text-align: center; vertical-align: middle !important; font-weight: bold; }
         .col-thu { color: #0056b3; }
+        
         .general-task { color: red; font-weight: bold; text-align: center; text-transform: uppercase; padding: 8px; background-color: #fff3cd; }
+        
         .task-item { margin-bottom: 8px; border-bottom: 1px dashed #ccc; padding-bottom: 5px; }
         .task-item:last-child { border-bottom: none; }
         .task-time { font-weight: bold; color: #333; margin-right: 5px; }
         .task-person { font-style: italic; color: #555; display: block; font-size: 0.9em; margin-top: 2px;}
+
+        /* Admin Panel */
         #adminPanel { display: none; background: #fff; padding: 20px; border: 2px dashed #0d6efd; border-radius: 10px; margin-top: 20px; }
         .nav-tabs .nav-link.active { font-weight: bold; color: #0d6efd; border-bottom: 3px solid #0d6efd; }
+
         .footer-copyright { margin-top: 30px; text-align: center; font-size: 13px; color: #666; border-top: 1px solid #eee; padding-top: 15px; }
+        
         @media print {
             .no-print { display: none !important; }
             .container { box-shadow: none; margin: 0; padding: 0; max-width: 100%; width: 100%; }
@@ -80,7 +91,6 @@
                 <div class="col-md-3">
                     <label class="fw-bold">Ngày:</label>
                     <input type="date" id="inputDate" class="form-control">
-                    <small class="text-muted" style="font-size: 11px;">(Chọn trên lịch)</small>
                 </div>
                 <div class="col-md-3">
                     <label class="fw-bold">Buổi:</label>
@@ -109,12 +119,13 @@
 
         <div id="tabExcel" style="display: none;">
             <div class="alert alert-info">
-                <i class="fas fa-info-circle"></i> File Excel nhập cột Ngày theo định dạng Việt Nam: <b>dd/mm/yyyy</b> (Ví dụ: 16/02/2026).
+                <i class="fas fa-info-circle"></i> File Excel cần có cột Ngày định dạng: <b>dd/mm/yyyy</b> (Ví dụ: 16/02/2026). <br>
+                Hệ thống sẽ đọc chính xác những gì bạn nhìn thấy trên file Excel.
             </div>
             <div class="row align-items-end">
                 <div class="col-md-4">
                     <button class="btn btn-outline-primary w-100" onclick="downloadSample()">
-                        <i class="fas fa-download"></i> Tải File Mẫu Mới (.xlsx)
+                        <i class="fas fa-download"></i> Tải File Mẫu (.xlsx)
                     </button>
                 </div>
                 <div class="col-md-6">
@@ -151,7 +162,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
     import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
 
-    // --- CẤU HÌNH CỦA BẠN ---
+    // --- CẤU HÌNH ---
     const firebaseConfig = {
         apiKey: "AIzaSyBZ7HZoLwwIO5P42Ywy_E39bxQArDQaPMo",
         authDomain: "lichlamviec-f7b69.firebaseapp.com",
@@ -165,34 +176,33 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    // --- HÀM XỬ LÝ NGÀY THÔNG MINH ---
-    
-    // Hàm này tự động chuyển mọi định dạng (Excel Serial, dd/mm/yyyy) về chuẩn YYYY-MM-DD để lưu trữ
+    // --- HÀM XỬ LÝ NGÀY (QUAN TRỌNG ĐÃ SỬA) ---
     function normalizeDate(input) {
         if (!input) return "";
+        let str = input.toString().trim();
         
-        // 1. Nếu là số (Excel Serial Date)
-        if (typeof input === 'number') {
-            const date = new Date(Math.round((input - 25569) * 86400 * 1000));
-            return date.toISOString().split('T')[0];
-        }
-        
-        // 2. Nếu là chuỗi "dd/mm/yyyy" (Việt Nam)
-        if (typeof input === 'string' && input.includes('/')) {
-            const parts = input.trim().split('/');
-            // Nếu đủ 3 phần (ngày/tháng/năm)
+        // Trường hợp 1: Chuỗi "dd/mm/yyyy" (VD: 16/02/2026) -> Chuyển thành YYYY-MM-DD
+        if (str.includes('/')) {
+            const parts = str.split('/');
             if (parts.length === 3) {
-                let day = parts[0].padStart(2, '0');
-                let month = parts[1].padStart(2, '0');
-                let year = parts[2];
-                // Kiểm tra xem năm có đủ 4 số không, nếu nhập tắt 26 -> 2026
-                if (year.length === 2) year = "20" + year;
-                return `${year}-${month}-${day}`;
+                let d = parts[0].padStart(2, '0');
+                let m = parts[1].padStart(2, '0');
+                let y = parts[2];
+                if (y.length === 2) y = "20" + y; // Xử lý nhập tắt năm 26 -> 2026
+                return `${y}-${m}-${d}`;
             }
         }
         
-        // 3. Nếu đã là chuẩn YYYY-MM-DD hoặc định dạng khác
-        return input; 
+        // Trường hợp 2: Chuỗi "yyyy-mm-dd" -> Giữ nguyên
+        if (str.includes('-') && str.length >= 10) return str;
+
+        // Trường hợp 3: Số sê-ri (Dự phòng, nhưng code mới sẽ ưu tiên đọc chuỗi)
+        if (!isNaN(str) && str.length < 8) {
+             const date = new Date(Math.round((input - 25569) * 86400 * 1000));
+             return date.toISOString().split('T')[0];
+        }
+
+        return "";
     }
 
     function convertToMinutes(timeStr) {
@@ -213,7 +223,7 @@
     }
     function getDayName(i) { return ["Chủ Nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"][i]; }
 
-    // --- LOGIC CHÍNH ---
+    // --- LOGIC GIAO DIỆN ---
     window.switchTab = function(tabName) {
         document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
         document.getElementById('tabManual').style.display = tabName === 'manual' ? 'block' : 'none';
@@ -229,7 +239,7 @@
     };
 
     window.addSchedule = function() {
-        const date = document.getElementById("inputDate").value; // Input date luôn trả về YYYY-MM-DD
+        const date = document.getElementById("inputDate").value; 
         const session = document.getElementById("inputSession").value;
         const time = document.getElementById("inputTime").value;
         const content = document.getElementById("inputContent").value;
@@ -241,9 +251,8 @@
         .then(() => { alert("Đã lưu!"); document.getElementById("inputContent").value = ""; });
     };
 
-    // --- XỬ LÝ EXCEL (ĐÃ CẬP NHẬT ĐỊNH DẠNG VIỆT NAM) ---
+    // --- XỬ LÝ EXCEL (ĐÃ SỬA: CHẾ ĐỘ RAW) ---
     window.downloadSample = function() {
-        // Dữ liệu mẫu dùng định dạng dd/mm/yyyy
         const ws_data = [
             ["Ngay (dd/mm/yyyy)", "Buoi", "Gio", "NoiDung", "NguoiThucHien"],
             ["16/02/2026", "Sáng", "07:00", "Chào cờ đầu tuần", "BGH"],
@@ -253,7 +262,7 @@
         const ws = XLSX.utils.aoa_to_sheet(ws_data);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "MauNhapLieu");
-        XLSX.writeFile(wb, "Mau_Lich_Cong_Tac_VN.xlsx");
+        XLSX.writeFile(wb, "Mau_Lich_Cong_Tac.xlsx");
     };
 
     window.processExcel = function() {
@@ -264,15 +273,22 @@
         reader.onload = function(e) {
             const data = new Uint8Array(e.target.result);
             const workbook = XLSX.read(data, {type: 'array'});
-            const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header: 1});
+            
+            // QUAN TRỌNG: raw: false ĐỂ ĐỌC CHÍNH XÁC NHỮNG GÌ MẮT THẤY (STRING)
+            const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {
+                header: 1,
+                raw: false, 
+                dateNF: "dd/mm/yyyy" 
+            });
 
             let count = 0;
             for(let i = 1; i < jsonData.length; i++) {
                 let row = jsonData[i];
                 if(!row[0] || !row[3]) continue;
 
-                // Chuẩn hóa ngày dd/mm/yyyy -> YYYY-MM-DD
+                // Chuẩn hóa ngày
                 let dateStr = normalizeDate(row[0]);
+                if (!dateStr) continue; // Nếu ngày lỗi thì bỏ qua
                 
                 push(ref(db, 'schedules'), {
                     date: dateStr,
@@ -302,10 +318,13 @@
             for (let i = 0; i < 7; i++) {
                 let currDate = new Date(mondayDate);
                 currDate.setDate(mondayDate.getDate() + i);
-                let yyyy = currDate.getFullYear(), mm = String(currDate.getMonth()+1).padStart(2,'0'), dd = String(currDate.getDate()).padStart(2,'0');
                 
-                // Tìm kiếm dữ liệu khớp ngày
+                // Tạo chuỗi ngày chuẩn để so sánh
+                let yyyy = currDate.getFullYear();
+                let mm = String(currDate.getMonth()+1).padStart(2,'0');
+                let dd = String(currDate.getDate()).padStart(2,'0');
                 let dateKey = `${yyyy}-${mm}-${dd}`;
+                
                 let tasks = allData.filter(t => t.date === dateKey);
                 
                 html += `<tr>
