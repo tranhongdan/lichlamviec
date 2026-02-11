@@ -3,44 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lịch Công Tác - THPT Số 1 Trần Phú</title>
+    <title>Lich Cong Tac - THPT So 1 Tran Phu</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    
     <style>
         body { font-family: 'Times New Roman', Times, serif; background-color: #f4f6f9; color: #000; }
         .container { max-width: 1200px; background: white; padding: 40px 30px; margin-top: 20px; margin-bottom: 50px; box-shadow: 0 0 15px rgba(0,0,0,0.1); }
         
-        /* HEADER */
         .header-top { display: flex; justify-content: space-between; text-align: center; margin-bottom: 15px; }
         .header-left h4 { margin: 0; font-size: 15px; text-transform: uppercase; font-weight: normal; }
         .header-left h5 { margin: 0; font-size: 15px; font-weight: bold; text-decoration: underline; margin-top: 5px;}
         .header-right h4 { margin: 0; font-size: 15px; text-transform: uppercase; font-weight: bold; }
-        .header-right h5 { margin: 0; font-size: 15px; font-weight: bold; font-style: normal; margin-top: 5px; }
-        
-        /* Tieu de */
+        .header-right h5 { margin: 0; font-size: 15px; font-weight: bold; margin-top: 5px; }
+
         .main-title { text-align: center; color: #0d6efd; text-transform: uppercase; font-weight: bold; margin: 25px 0 5px 0; font-size: 24px; }
         .date-range-display { text-align: center; font-style: italic; margin-bottom: 20px; font-size: 16px; color: #333; }
-
-        /* Bang */
+        
         .schedule-table { width: 100%; border-collapse: collapse; border: 1px solid black; }
         .schedule-table th, .schedule-table td { border: 1px solid black; padding: 8px; vertical-align: top; font-size: 15px; }
         .schedule-table thead th { background-color: #d1e7dd; text-align: center; vertical-align: middle; font-weight: bold; text-transform: uppercase; }
         .col-thu, .col-ngay { width: 10%; text-align: center; vertical-align: middle !important; font-weight: bold; }
         .col-thu { color: #0056b3; }
         
-        /* Task Styles */
         .general-task { color: red; font-weight: bold; text-align: center; text-transform: uppercase; padding: 10px; background-color: #fff3cd; font-size: 16px; }
         .task-item { margin-bottom: 8px; border-bottom: 1px dashed #ccc; padding-bottom: 5px; }
         .task-item:last-child { border-bottom: none; }
         .task-time { font-weight: bold; color: #333; margin-right: 5px; }
         .task-person { font-style: italic; color: #555; display: block; font-size: 0.9em; margin-top: 2px;}
 
-        /* UI Controls */
         .control-bar { margin-top: 30px; padding: 20px; background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; }
         #adminPanel { display: none; background: #fff; padding: 20px; border: 2px dashed #0d6efd; border-radius: 10px; margin-top: 20px; }
         .nav-tabs .nav-link.active { font-weight: bold; color: #0d6efd; border-bottom: 3px solid #0d6efd; }
+        
+        /* Table data management */
+        .table-manage { font-size: 14px; }
+        .btn-xs { padding: 1px 5px; font-size: 12px; }
+
         .footer-copyright { margin-top: 30px; text-align: center; font-size: 13px; color: #666; border-top: 1px solid #eee; padding-top: 15px; }
         
         @media print {
@@ -56,93 +55,108 @@
 <div class="container">
     <div class="header-top">
         <div class="header-left">
-            <h4>SỞ GIÁO DỤC VÀ ĐÀO TẠO ĐẮK LẮK</h4>
-            <h5>TRƯỜNG THPT SỐ 1 TRẦN PHÚ</h5>
+            <h4>SO GIAO DUC VA DAO TAO DAK LAK</h4>
+            <h5>TRUONG THPT SO 1 TRAN PHU</h5>
         </div>
         <div class="header-right">
-            <h4>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</h4>
-            <h5>Độc lập - Tự do - Hạnh phúc</h5>
+            <h4>CONG HOA XA HOI CHU NGHIA VIET NAM</h4>
+            <h5>Doc lap - Tu do - Hanh phuc</h5>
         </div>
     </div>
 
-    <h2 class="main-title">LỊCH LÀM VIỆC</h2>
+    <h2 class="main-title">LICH LAM VIEC</h2>
     <div id="scheduleDateRange" class="date-range-display"></div>
 
     <table class="schedule-table">
         <thead>
-            <tr><th>THỨ</th><th>NGÀY</th><th style="width: 40%;">BUỔI SÁNG</th><th style="width: 40%;">BUỔI CHIỀU</th></tr>
-            <tr><td colspan="4" class="general-task" id="displayGeneralTask">Đang tải công việc chung...</td></tr>
+            <tr><th>THU</th><th>NGAY</th><th style="width: 40%;">BUOI SANG</th><th style="width: 40%;">BUOI CHIEU</th></tr>
+            <tr><td colspan="4" class="general-task" id="displayGeneralTask">Dang tai cong viec chung...</td></tr>
         </thead>
-        <tbody id="scheduleBody"><tr><td colspan="4" class="text-center p-3">Đang tải dữ liệu...</td></tr></tbody>
+        <tbody id="scheduleBody"><tr><td colspan="4" class="text-center p-3">Dang tai du lieu...</td></tr></tbody>
     </table>
 
     <div class="control-bar no-print">
         <div class="row align-items-center">
             <div class="col-md-5">
                 <div class="input-group">
-                    <span class="input-group-text fw-bold bg-white"><i class="far fa-calendar-alt text-primary"></i>&nbsp; Xem từ ngày:</span>
+                    <span class="input-group-text fw-bold bg-white"><i class="far fa-calendar-alt text-primary"></i>&nbsp; Xem tu ngay:</span>
                     <input type="date" id="viewDate" class="form-control" onchange="loadSchedule()">
                 </div>
             </div>
             <div class="col-md-7 text-end">
-                <button class="btn btn-secondary me-2" onclick="window.print()"><i class="fas fa-print"></i> In Lịch</button>
-                <button class="btn btn-danger" onclick="toggleAdmin()"><i class="fas fa-user-cog"></i> Quản trị</button>
+                <button class="btn btn-secondary me-2" onclick="window.print()"><i class="fas fa-print"></i> In Lich</button>
+                <button class="btn btn-danger" onclick="toggleAdmin()"><i class="fas fa-user-cog"></i> Quan tri</button>
             </div>
         </div>
     </div>
 
     <div id="adminPanel" class="no-print">
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="text-primary m-0"><i class="fas fa-tools"></i> QUẢN LÝ LỊCH CÔNG TÁC</h5>
-            <button class="btn btn-sm btn-outline-danger" onclick="document.getElementById('adminPanel').style.display='none'">Đóng</button>
+            <h5 class="text-primary m-0"><i class="fas fa-tools"></i> QUAN LY LICH CONG TAC</h5>
+            <button class="btn btn-sm btn-outline-danger" onclick="document.getElementById('adminPanel').style.display='none'">Dong</button>
         </div>
 
         <ul class="nav nav-tabs mb-3">
-            <li class="nav-item"><button class="nav-link active" onclick="switchTab('general')">1. Công Việc Chung</button></li>
-            <li class="nav-item"><button class="nav-link" onclick="switchTab('manual')">2. Nhập Lịch (Thủ Công)</button></li>
-            <li class="nav-item"><button class="nav-link" onclick="switchTab('excel')">3. Nhập Lịch (Excel)</button></li>
+            <li class="nav-item"><button class="nav-link active" onclick="switchTab('general')">1. Cong Viec Chung</button></li>
+            <li class="nav-item"><button class="nav-link" onclick="switchTab('manual')">2. Nhap Lich</button></li>
+            <li class="nav-item"><button class="nav-link" onclick="switchTab('excel')">3. Nhap tu Excel</button></li>
+            <li class="nav-item"><button class="nav-link" onclick="switchTab('list')">4. Tat ca du lieu</button></li>
         </ul>
 
         <div id="tabGeneral">
             <div class="input-group">
-                <span class="input-group-text fw-bold">Nội dung:</span>
-                <input type="text" id="inputGeneralTask" class="form-control" placeholder="Nhập nội dung...">
-                <button class="btn btn-warning fw-bold" onclick="saveGeneralTask()">Lưu Thay Đổi</button>
+                <span class="input-group-text fw-bold">Noi dung:</span>
+                <input type="text" id="inputGeneralTask" class="form-control" placeholder="Nhap noi dung...">
+                <button class="btn btn-warning fw-bold" onclick="saveGeneralTask()">Luu Thay Doi</button>
             </div>
         </div>
 
         <div id="tabManual" style="display: none;">
             <div class="row g-3">
-                <div class="col-md-3"><label class="fw-bold">Ngày:</label><input type="date" id="inputDate" class="form-control"></div>
-                <div class="col-md-3"><label class="fw-bold">Buổi:</label><select id="inputSession" class="form-select"><option value="Sáng">Buổi Sáng</option><option value="Chiều">Buổi Chiều</option></select></div>
-                <div class="col-md-3"><label class="fw-bold">Giờ:</label><input type="text" id="inputTime" class="form-control"></div>
-                <div class="col-md-3"><label class="fw-bold">Người thực hiện:</label><input type="text" id="inputPerson" class="form-control"></div>
-                <div class="col-12"><label class="fw-bold">Nội dung:</label><input type="text" id="inputContent" class="form-control" placeholder="Nhập nội dung..."></div>
-                <div class="col-12 text-center mt-3"><button class="btn btn-success px-4" onclick="addSchedule()"><i class="fas fa-save"></i> LƯU LỊCH</button></div>
+                <input type="hidden" id="editKey">
+                <div class="col-md-3"><label class="fw-bold">Ngay:</label><input type="date" id="inputDate" class="form-control"></div>
+                <div class="col-md-3"><label class="fw-bold">Buoi:</label><select id="inputSession" class="form-select"><option value="Sáng">Buoi Sang</option><option value="Chiều">Buoi Chieu</option></select></div>
+                <div class="col-md-3"><label class="fw-bold">Gio:</label><input type="text" id="inputTime" class="form-control"></div>
+                <div class="col-md-3"><label class="fw-bold">Nguoi thuc hien:</label><input type="text" id="inputPerson" class="form-control"></div>
+                <div class="col-12"><label class="fw-bold">Noi dung:</label><input type="text" id="inputContent" class="form-control" placeholder="Nhap noi dung..."></div>
+                <div class="col-12 text-center mt-3">
+                    <button id="btnSaveManual" class="btn btn-success px-4" onclick="addSchedule()"><i class="fas fa-save"></i> LUU LICH</button>
+                    <button id="btnCancelEdit" class="btn btn-secondary px-4" style="display:none" onclick="cancelEdit()">HUY</button>
+                </div>
             </div>
         </div>
 
         <div id="tabExcel" style="display: none;">
-            <div class="alert alert-info">
-                <i class="fas fa-info-circle"></i> Hỗ trợ ngày dạng: <b>16/2/2026</b>, <b>16/02/26</b>, <b>16-2-2026</b>...
-            </div>
             <div class="row align-items-end">
-                <div class="col-md-4"><button class="btn btn-outline-primary w-100" onclick="downloadSample()"><i class="fas fa-download"></i> Tải File Mẫu</button></div>
-                <div class="col-md-6"><label class="fw-bold">Chọn file Excel:</label><input type="file" id="excelFile" class="form-control" accept=".xlsx, .xls"></div>
-                <div class="col-md-2"><button class="btn btn-success w-100" onclick="processExcel()"><i class="fas fa-upload"></i> Nhập</button></div>
+                <div class="col-md-4"><button class="btn btn-outline-primary w-100" onclick="downloadSample()"><i class="fas fa-download"></i> Tai File Mau</button></div>
+                <div class="col-md-6"><label class="fw-bold">Chon file Excel:</label><input type="file" id="excelFile" class="form-control" accept=".xlsx, .xls"></div>
+                <div class="col-md-2"><button class="btn btn-success w-100" onclick="processExcel()"><i class="fas fa-upload"></i> Nhap</button></div>
+            </div>
+        </div>
+
+        <div id="tabList" style="display: none;">
+            <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                <table class="table table-sm table-bordered table-manage">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Ngay</th><th>Buoi</th><th>Gio</th><th>Noi dung</th><th>Nguoi</th><th>Thao tac</th>
+                        </tr>
+                    </thead>
+                    <tbody id="manageTableBody"></tbody>
+                </table>
             </div>
         </div>
     </div>
 
     <div class="footer-copyright no-print">
-        © 2026 Bản quyền thuộc về Trường THPT Số 1 Trần Phú - Đắk Lắk<br>
-        Phát triển bởi: <b>Trần Hồng Dân</b> - Email: tranhongdan@tranphudlk.edu.vn
+        © 2026 Ban quyen thuoc ve Truong THPT So 1 Tran Phu - Dak Lak<br>
+        Phat trien boi: <b>Tran Hong Dan</b> - Email: tranhongdan@tranphudlk.edu.vn
     </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-    import { getDatabase, ref, push, set, onValue } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+    import { getDatabase, ref, push, set, onValue, remove, update } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyBZ7HZoLwwIO5P42Ywy_E39bxQArDQaPMo",
@@ -157,194 +171,170 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    // --- HAM XU LY NGAY (UPDATE) ---
+    // --- UTILS ---
     function normalizeDate(input) {
-        if (input === undefined || input === null || input === "") return "";
-        
-        // 1. Xu ly Excel Serial Number
+        if (!input) return "";
         if (typeof input === 'number') {
             const dateInfo = window.XLSX.SSF.parse_date_code(input);
-            if (dateInfo) {
-                return `${dateInfo.y}-${String(dateInfo.m).padStart(2, '0')}-${String(dateInfo.d).padStart(2, '0')}`;
-            }
+            return `${dateInfo.y}-${String(dateInfo.m).padStart(2, '0')}-${String(dateInfo.d).padStart(2, '0')}`;
         }
-        
-        // 2. Xu ly Chuoi (String)
         let str = input.toString().trim();
-        
-        // Chuyen tat ca ve dau / de xu ly (vd: 16-02-2026 -> 16/02/2026)
-        str = str.replace(/[-.]/g, '/');
-
         if (str.includes('/')) {
             const parts = str.split('/');
-            if (parts.length === 3) {
-                let d = parseInt(parts[0]);
-                let m = parseInt(parts[1]);
-                let y = parseInt(parts[2]);
-
-                if (isNaN(d) || isNaN(m) || isNaN(y)) return "";
-
-                // Xu ly nam 2 chu so (vd: 26 -> 2026)
-                if (y < 100) y += 2000;
-
-                return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-            }
+            if (parts.length === 3) return `${parts[2].length==2?"20"+parts[2]:parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
         }
-        return "";
+        return str.length >= 10 ? str : "";
     }
 
     function convertToMinutes(timeStr) {
-        if (!timeStr || typeof timeStr !== 'string' || timeStr.trim() === "") return 9999;
+        if (!timeStr) return 9999;
         let numbers = timeStr.match(/\d+/g);
         if (!numbers) return 9999;
-        let h = parseInt(numbers[0]);
-        let m = numbers[1] ? parseInt(numbers[1]) : 0;
-        return h * 60 + m;
+        return parseInt(numbers[0]) * 60 + (numbers[1] ? parseInt(numbers[1]) : 0);
     }
-    function smartSort(a, b) { return convertToMinutes(a.time) - convertToMinutes(b.time); }
-    function getMonday(d) {
-        d = new Date(d);
-        var day = d.getDay();
-        var diff = d.getDate() - day + (day == 0 ? -6 : 1);
-        return new Date(d.setDate(diff));
-    }
-    function getDayName(i) { return ["Chủ Nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"][i]; }
+    const getDayName = (i) => ["Chu Nhat", "Thu Hai", "Thu Ba", "Thu Tu", "Thu Nam", "Thu Sau", "Thu Bay"][i];
 
-    // --- LOGIC UI ---
+    // --- UI NAVIGATION ---
     window.switchTab = function(tabName) {
         document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
-        document.getElementById('tabGeneral').style.display = 'none';
-        document.getElementById('tabManual').style.display = 'none';
-        document.getElementById('tabExcel').style.display = 'none';
+        ['General', 'Manual', 'Excel', 'List'].forEach(t => document.getElementById('tab' + t).style.display = 'none');
         document.getElementById('tab' + tabName.charAt(0).toUpperCase() + tabName.slice(1)).style.display = 'block';
         event.target.classList.add('active');
-    }
-
-    window.toggleAdmin = function() {
-        if (prompt("Nhập mật khẩu quản trị:") === "123456") {
-            document.getElementById("adminPanel").style.display = "block";
-            document.getElementById("adminPanel").scrollIntoView({behavior: "smooth"});
-        } else { alert("Sai mật khẩu!"); }
     };
 
-    // --- LOGIC DATA ---
+    window.toggleAdmin = function() {
+        if (prompt("Nhap mat khau quan tri:") === "123456") {
+            document.getElementById("adminPanel").style.display = "block";
+        } else { alert("Sai mat khau!"); }
+    };
+
+    // --- CORE LOGIC ---
     onValue(ref(db, 'generalTask'), (snapshot) => {
         const val = snapshot.val();
-        document.getElementById("displayGeneralTask").innerText = val ? val : "CÔNG VIỆC CHUNG: DẠY VÀ HỌC THEO THỜI KHÓA BIỂU";
-        document.getElementById("inputGeneralTask").value = val ? val : "";
+        document.getElementById("displayGeneralTask").innerText = val || "CONG VIEC CHUNG: DAY VA HOC THEO THOI KHOA BIEU";
+        document.getElementById("inputGeneralTask").value = val || "";
     });
 
     window.saveGeneralTask = function() {
-        const content = document.getElementById("inputGeneralTask").value;
-        if (!content) { alert("Không được để trống!"); return; }
-        set(ref(db, 'generalTask'), content).then(() => { alert("Đã cập nhật!"); });
-    }
+        set(ref(db, 'generalTask'), document.getElementById("inputGeneralTask").value).then(() => alert("Da cap nhat!"));
+    };
 
     window.addSchedule = function() {
-        const date = document.getElementById("inputDate").value; 
-        const session = document.getElementById("inputSession").value;
-        const time = document.getElementById("inputTime").value;
-        const content = document.getElementById("inputContent").value;
-        const person = document.getElementById("inputPerson").value;
-        if(!date || !content) { alert("Thiếu ngày hoặc nội dung!"); return; }
-        push(ref(db, 'schedules'), { date, session, time, content, person })
-        .then(() => { alert("Đã lưu!"); document.getElementById("inputContent").value = ""; });
-    };
-
-    window.downloadSample = function() {
-        const ws_data = [
-            ["Ngay (dd/mm/yyyy)", "Buoi", "Gio", "NoiDung", "NguoiThucHien"],
-            ["16/02/26", "Sáng", "07:00", "Chào cờ (Ngày ngắn 2 số)", "BGH"],
-            ["16/2/2026", "Chiều", "14:00", "Họp (Ngày/Tháng 1 số)", "Tổ Toán"],
-            ["17-02-2026", "Sáng", "07:00", "Kiểm tra (Dùng dấu gạch ngang)", "GVCN"]
-        ];
-        const ws = XLSX.utils.aoa_to_sheet(ws_data);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "MauNhapLieu");
-        XLSX.writeFile(wb, "Mau_Lich_Cong_Tac.xlsx");
-    };
-
-    // --- PROCESS EXCEL ---
-    window.processExcel = function() {
-        const fileInput = document.getElementById('excelFile');
-        if(!fileInput.files.length) { alert("Chưa chọn file!"); return; }
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const data = new Uint8Array(e.target.result);
-            const workbook = XLSX.read(data, {type: 'array'});
-            const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1, raw: true });
-            
-            let count = 0;
-            let lastValidDate = null; 
-
-            for(let i = 1; i < jsonData.length; i++) {
-                let row = jsonData[i];
-                let rawDate = row[0];
-                let currentContent = row[3];
-                
-                let dateStr = normalizeDate(rawDate);
-                
-                if (dateStr) {
-                    lastValidDate = dateStr; 
-                } else if (lastValidDate && (!rawDate)) {
-                    dateStr = lastValidDate;
-                }
-
-                if(!dateStr || !currentContent) continue; 
-
-                let sessionRaw = row[1] || "Sáng";
-                let sessionClean = sessionRaw.toString().trim();
-
-                push(ref(db, 'schedules'), {
-                    date: dateStr, 
-                    session: sessionClean, 
-                    time: row[2] ? row[2].toString().trim() : "", 
-                    content: currentContent.toString().trim(), 
-                    person: row[4] ? row[4].toString().trim() : ""
-                });
-                count++;
-            }
-            alert(`Đã nhập thành công ${count} công việc!`);
-            fileInput.value = "";
+        const key = document.getElementById("editKey").value;
+        const data = {
+            date: document.getElementById("inputDate").value,
+            session: document.getElementById("inputSession").value,
+            time: document.getElementById("inputTime").value,
+            content: document.getElementById("inputContent").value,
+            person: document.getElementById("inputPerson").value
         };
-        reader.readAsArrayBuffer(fileInput.files[0]);
+        if(!data.date || !data.content) { alert("Thieu thong tin!"); return; }
+
+        if(key) {
+            update(ref(db, 'schedules/' + key), data).then(() => { alert("Da cap nhat!"); cancelEdit(); });
+        } else {
+            push(ref(db, 'schedules'), data).then(() => { alert("Da luu!"); cancelEdit(); });
+        }
     };
 
+    window.cancelEdit = function() {
+        document.getElementById("editKey").value = "";
+        document.getElementById("inputContent").value = "";
+        document.getElementById("btnSaveManual").innerHTML = '<i class="fas fa-save"></i> LUU LICH';
+        document.getElementById("btnCancelEdit").style.display = "none";
+    };
+
+    window.deleteItem = function(key) {
+        if(confirm("Ban co chac muon xoa?")) remove(ref(db, 'schedules/' + key));
+    };
+
+    window.editItem = function(key, date, session, time, content, person) {
+        document.getElementById("editKey").value = key;
+        document.getElementById("inputDate").value = date;
+        document.getElementById("inputSession").value = session;
+        document.getElementById("inputTime").value = time;
+        document.getElementById("inputContent").value = content;
+        document.getElementById("inputPerson").value = person;
+        document.getElementById("btnSaveManual").innerHTML = '<i class="fas fa-edit"></i> CAP NHAT';
+        document.getElementById("btnCancelEdit").style.display = "inline-block";
+        switchTab('manual');
+        document.querySelectorAll('.nav-link')[1].click();
+    };
+
+    // --- DATA LOADING ---
     window.loadSchedule = function() {
         const viewDateStr = document.getElementById("viewDate").value;
         if(!viewDateStr) return;
         const startDate = new Date(viewDateStr);
+        
         onValue(ref(db, 'schedules'), (snapshot) => {
             const allData = [];
-            snapshot.forEach(child => allData.push(child.val()));
+            const manageHtml = [];
+            snapshot.forEach(child => {
+                const item = child.val();
+                item.key = child.key;
+                allData.push(item);
+                manageHtml.push(`<tr>
+                    <td>${item.date}</td><td>${item.session}</td><td>${item.time}</td>
+                    <td>${item.content}</td><td>${item.person}</td>
+                    <td>
+                        <button class="btn btn-xs btn-primary" onclick="editItem('${item.key}','${item.date}','${item.session}','${item.time}','${item.content}','${item.person}')">Sua</button>
+                        <button class="btn btn-xs btn-danger" onclick="deleteItem('${item.key}')">Xoa</button>
+                    </td>
+                </tr>`);
+            });
+
+            document.getElementById("manageTableBody").innerHTML = manageHtml.reverse().join("");
+
             let html = "";
             for (let i = 0; i < 7; i++) {
                 let currDate = new Date(startDate);
                 currDate.setDate(startDate.getDate() + i);
-                let yyyy = currDate.getFullYear(), mm = String(currDate.getMonth()+1).padStart(2,'0'), dd = String(currDate.getDate()).padStart(2,'0');
-                let dateKey = `${yyyy}-${mm}-${dd}`;
+                let dateKey = currDate.toISOString().split('T')[0];
                 let tasks = allData.filter(t => t.date === dateKey);
                 
                 html += `<tr>
                     <td class="col-thu">${getDayName(currDate.getDay())}</td>
-                    <td class="col-ngay">${dd}/${mm}/${yyyy}</td>
-                    <td>${renderTaskList(tasks.filter(t => t.session === "Sáng").sort(smartSort))}</td>
-                    <td>${renderTaskList(tasks.filter(t => t.session === "Chiều").sort(smartSort))}</td>
+                    <td class="col-ngay">${currDate.getDate()}/${currDate.getMonth()+1}</td>
+                    <td>${renderTaskList(tasks.filter(t => t.session === "Sáng"))}</td>
+                    <td>${renderTaskList(tasks.filter(t => t.session === "Chiều"))}</td>
                 </tr>`;
             }
             document.getElementById("scheduleBody").innerHTML = html;
             let endDate = new Date(startDate); endDate.setDate(startDate.getDate() + 6);
-            document.getElementById("scheduleDateRange").innerText = `(Từ ngày ${startDate.getDate()}/${startDate.getMonth()+1}/${startDate.getFullYear()} đến ngày ${endDate.getDate()}/${endDate.getMonth()+1}/${endDate.getFullYear()})`;
+            document.getElementById("scheduleDateRange").innerText = `(Tu ngay ${startDate.getDate()}/${startDate.getMonth()+1} den ngay ${endDate.getDate()}/${endDate.getMonth()+1}/${endDate.getFullYear()})`;
         });
     };
 
     function renderTaskList(tasks) {
-        return tasks.map(t => `<div class="task-item">${t.time?`<span class="task-time">${t.time}:</span>`:""} ${t.content} ${t.person?`<span class="task-person">(${t.person})</span>`:""}</div>`).join("");
+        return tasks.sort((a,b) => convertToMinutes(a.time) - convertToMinutes(b.time))
+            .map(t => `<div class="task-item">${t.time?`<span class="task-time">${t.time}:</span>`:""} ${t.content} ${t.person?`<span class="task-person">(${t.person})</span>`:""}</div>`).join("");
     }
 
+    // Excel & Init
+    window.processExcel = function() {
+        const file = document.getElementById('excelFile').files[0];
+        if(!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const workbook = XLSX.read(new Uint8Array(e.target.result), {type: 'array'});
+            const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header:1});
+            jsonData.slice(1).forEach(row => {
+                let d = normalizeDate(row[0]);
+                if(d && row[3]) push(ref(db, 'schedules'), {date:d, session:row[1]||"Sáng", time:row[2]||"", content:row[3], person:row[4]||""});
+            });
+            alert("Da nhap xong!");
+        };
+        reader.readAsArrayBuffer(file);
+    };
+
+    function getMonday(d) {
+        d = new Date(d);
+        let day = d.getDay(), diff = d.getDate() - day + (day == 0 ? -6:1);
+        return new Date(d.setDate(diff));
+    }
     document.getElementById("viewDate").valueAsDate = getMonday(new Date());
     loadSchedule();
 </script>
-
 </body>
 </html>
