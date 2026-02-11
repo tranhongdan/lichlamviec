@@ -82,7 +82,7 @@
             <div class="col-md-5">
                 <div class="input-group">
                     <span class="input-group-text fw-bold bg-white"><i class="far fa-calendar-alt text-primary"></i>&nbsp; Xem từ ngày:</span>
-                    <input type="date" id="viewDate" class="form-control" onchange="loadSchedule()">
+                    <input type="date" id="viewDate" class="form-control" onchange="loadSchedule(true)">
                 </div>
             </div>
             <div class="col-md-7 text-end">
@@ -151,10 +151,9 @@
                     <div class="col-md-4"><input type="text" id="accCode" class="form-control" maxlength="4" placeholder="Mã bảo mật (4 số)"></div>
                     <div class="col-md-3"><button class="btn btn-primary w-100" onclick="createSubAccount()">Tạo Acc Con</button></div>
                 </div>
-                <small class="text-muted mt-2">Định dạng đăng nhập sẽ là: [Tên][Mã]. Ví dụ: "tranphu" + "1234" = "tranphu1234"</small>
             </div>
             <table class="table table-bordered table-sm">
-                <thead><tr class="table-secondary"><th>Tài khoản hiện có</th><th>Mã bảo mật (4 số cuối)</th><th>Thao tác</th></tr></thead>
+                <thead><tr class="table-secondary"><th>Tài khoản hiện có</th><th>Mã bảo mật</th><th>Thao tác</th></tr></thead>
                 <tbody id="accountTableBody"></tbody>
             </table>
         </div>
@@ -184,26 +183,28 @@
     const db = getDatabase(app);
     let currentUser = null; 
 
+    // --- HÀM HỖ TRỢ NGÀY THÁNG ---
+    function getMondayOfCurrentWeek() {
+        const d = new Date();
+        const day = d.getDay();
+        const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Điều chỉnh nếu là Chủ Nhật
+        const monday = new Date(d.setDate(diff));
+        return monday.toISOString().split('T')[0];
+    }
+
     // --- QUẢN LÝ ĐĂNG NHẬP ---
     window.toggleAdmin = function() {
-        const inputLogin = prompt("Nhập đầy đủ [Tên][Mã] (Ví dụ: tranphu1234) hoặc 123456 cho Admin:");
+        const inputLogin = prompt("Nhập [Tên][Mã] hoặc 123456:");
         if (!inputLogin) return;
-
-        if (inputLogin === "123456") {
-            currentUser = 'admin';
-            showPanel();
-        } else {
+        if (inputLogin === "123456") { currentUser = 'admin'; showPanel(); }
+        else {
             onValue(ref(db, 'subAccounts'), (snap) => {
                 let found = false;
                 snap.forEach(child => {
                     const acc = child.val();
-                    if (acc.username + acc.code === inputLogin) {
-                        currentUser = child.key;
-                        found = true;
-                    }
+                    if (acc.username + acc.code === inputLogin) { currentUser = child.key; found = true; }
                 });
-                if (found) showPanel();
-                else alert("Thông tin đăng nhập không chính xác!");
+                if (found) showPanel(); else alert("Sai thông tin!");
             }, { onlyOnce: true });
         }
     };
@@ -212,52 +213,21 @@
         document.getElementById("adminPanel").style.display = "block";
         const isAdmin = currentUser === 'admin';
         document.querySelectorAll('.admin-only').forEach(el => el.style.display = isAdmin ? 'block' : 'none');
-        
-        if (isAdmin) {
-            document.getElementById("userInfoDisplay").innerText = "QUẢN TRỊ VIÊN";
-        } else {
-            onValue(ref(db, `subAccounts/${currentUser}`), (s) => {
-                const acc = s.val();
-                document.getElementById("userInfoDisplay").innerText = "Tài khoản: " + acc.username;
-                if (confirm("Bạn có muốn đổi 4 ký tự mã bảo mật cuối không?")) {
-                    const newCode = prompt("Nhập 4 ký tự mã mới:");
-                    if(newCode && newCode.length === 4) set(ref(db, `subAccounts/${currentUser}/code`), newCode);
-                    else alert("Mã phải đúng 4 ký tự!");
-                }
-            }, { onlyOnce: true });
-            switchTab('manual');
-        }
+        if (!isAdmin) switchTab('manual');
     }
 
     window.logoutAdmin = () => { currentUser = null; document.getElementById("adminPanel").style.display = "none"; };
 
-    // --- QUẢN LÝ TÀI KHOẢN CON ---
-    window.createSubAccount = () => {
-        const username = document.getElementById("accUsername").value.trim();
-        const code = document.getElementById("accCode").value.trim();
-        if(username && code.length === 4) {
-            push(ref(db, 'subAccounts'), { username, code });
-            document.getElementById("accUsername").value = "";
-            document.getElementById("accCode").value = "";
-            alert("Đã tạo tài khoản: " + username + code);
-        } else {
-            alert("Vui lòng nhập tên và mã bảo mật đúng 4 ký tự!");
+    // --- LOGIC LỊCH ---
+    window.loadSchedule = function(isUserSelected = false) {
+        let viewDateStr = document.getElementById("viewDate").value;
+        
+        // Nếu không có ngày được chọn hoặc chưa từng chọn, lấy Thứ 2 tuần hiện tại
+        if (!viewDateStr && !isUserSelected) {
+            viewDateStr = getMondayOfCurrentWeek();
+            document.getElementById("viewDate").value = viewDateStr;
         }
-    };
 
-    onValue(ref(db, 'subAccounts'), (snap) => {
-        let h = "";
-        snap.forEach(c => { 
-            const acc = c.val();
-            h += `<tr><td><b>${acc.username}</b></td><td>${acc.code}</td><td><button class="btn btn-xs btn-danger" onclick="removeAcc('${c.key}')">Xóa</button></td></tr>`; 
-        });
-        document.getElementById("accountTableBody").innerHTML = h;
-    });
-    window.removeAcc = (key) => confirm("Xóa tài khoản này?") && remove(ref(db, `subAccounts/${key}`));
-
-    // --- LOGIC LỊCH (Giữ nguyên các cải tiến trước) ---
-    window.loadSchedule = function() {
-        const viewDateStr = document.getElementById("viewDate").value;
         const filterDate = document.getElementById("filterListDate").value;
         const todayStr = new Date().toISOString().split('T')[0];
         
@@ -265,12 +235,14 @@
             const allData = [];
             snapshot.forEach(child => { let v = child.val(); v.key = child.key; allData.push(v); });
 
+            // Tab 4: Danh sách lọc
             const listData = filterDate ? allData.filter(i => i.date === filterDate) : allData;
             document.getElementById("manageTableBody").innerHTML = listData.sort((a,b) => new Date(a.date)-new Date(b.date)).map(item => `
                 <tr><td>${item.date}</td><td>${item.session}</td><td>${item.time||''}</td><td>${item.content}</td><td>${item.person||''}</td>
                 <td><button class="btn btn-xs btn-primary" onclick="editItem('${item.key}','${item.date}','${item.session}','${item.time}','${item.content}','${item.person}')">Sửa</button>
                 <button class="btn btn-xs btn-danger" onclick="deleteItem('${item.key}')">Xóa</button></td></tr>`).join("");
 
+            // Bảng chính 7 ngày (Tính từ ngày chọn)
             let html = "";
             let start = new Date(viewDateStr);
             for (let i = 0; i < 7; i++) {
@@ -285,6 +257,9 @@
                     <td>${renderTasks(tasks.filter(t => t.session === "Chiều"))}</td></tr>`;
             }
             document.getElementById("scheduleBody").innerHTML = html;
+            
+            let end = new Date(start); end.setDate(start.getDate()+6);
+            document.getElementById("scheduleDateRange").innerText = `(Từ ngày ${start.getDate()}/${start.getMonth()+1} đến ngày ${end.getDate()}/${end.getMonth()+1}/${end.getFullYear()})`;
         });
     };
 
@@ -294,6 +269,7 @@
             <div class="task-content-wrapper"><b>${t.time?t.time+':':''}</b> ${t.content} <i>${t.person?'('+t.person+')':''}</i></div></div>`).join("");
     }
 
+    // --- CÁC HÀM KHÁC ---
     window.switchTab = (n) => {
         ['general','manual','excel','list','accounts'].forEach(id => {
             const el = document.getElementById('tab'+id.charAt(0).toUpperCase()+id.slice(1));
@@ -302,6 +278,19 @@
         document.querySelectorAll('#adminTabs .nav-link').forEach(l => l.classList.toggle('active', l.innerText.toLowerCase().includes(n)));
     };
     
+    window.createSubAccount = () => {
+        const username = document.getElementById("accUsername").value.trim();
+        const code = document.getElementById("accCode").value.trim();
+        if(username && code.length === 4) { push(ref(db, 'subAccounts'), { username, code }); alert("Đã tạo!"); }
+    };
+
+    onValue(ref(db, 'subAccounts'), (snap) => {
+        let h = "";
+        snap.forEach(c => { h += `<tr><td><b>${c.val().username}</b></td><td>${c.val().code}</td><td><button class="btn btn-xs btn-danger" onclick="removeAcc('${c.key}')">Xóa</button></td></tr>`; });
+        document.getElementById("accountTableBody").innerHTML = h;
+    });
+    window.removeAcc = (key) => confirm("Xóa?") && remove(ref(db, `subAccounts/${key}`));
+
     window.addSchedule = () => {
         const data = { 
             date: document.getElementById("inputDate").value, session: document.getElementById("inputSession").value,
@@ -309,7 +298,6 @@
             person: document.getElementById("inputPerson").value, creator: currentUser
         };
         const key = document.getElementById("editKey").value;
-        if(!data.date || !data.content) { alert("Thiếu dữ liệu!"); return; }
         if(key) update(ref(db, 'schedules/'+key), data).then(cancelEdit);
         else push(ref(db, 'schedules'), data).then(cancelEdit);
     };
@@ -321,10 +309,10 @@
         switchTab('manual');
     };
     window.deleteItem = (k) => confirm("Xóa?") && remove(ref(db, 'schedules/'+k));
-    window.saveGeneralTask = () => set(ref(db, 'generalTask'), document.getElementById("inputGeneralTask").value).then(()=>alert("Đã lưu!"));
+    window.saveGeneralTask = () => set(ref(db, 'generalTask'), document.getElementById("inputGeneralTask").value);
     onValue(ref(db, 'generalTask'), (s) => document.getElementById("displayGeneralTask").innerText = s.val() || "LỊCH TRƯỜNG");
 
-    document.getElementById("viewDate").valueAsDate = new Date();
+    // Khởi tạo lần đầu
     loadSchedule();
 </script>
 </body>
