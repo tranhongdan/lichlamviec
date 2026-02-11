@@ -12,27 +12,12 @@
         body { font-family: 'Times New Roman', Times, serif; background-color: #f4f6f9; color: #000; }
         .container { max-width: 1200px; background: white; padding: 40px 30px; margin-top: 20px; margin-bottom: 50px; box-shadow: 0 0 15px rgba(0,0,0,0.1); }
         
-        /* --- HEADER CHUẨN QUỐC HIỆU TIÊU NGỮ (ĐÃ SỬA) --- */
+        /* --- HEADER --- */
         .header-top { display: flex; justify-content: space-between; text-align: center; margin-bottom: 15px; }
-        
-        /* Bên trái: Sở & Trường */
         .header-left h4 { margin: 0; font-size: 15px; text-transform: uppercase; font-weight: normal; }
         .header-left h5 { margin: 0; font-size: 15px; font-weight: bold; text-decoration: underline; margin-top: 5px;}
-        
-        /* Bên phải: Quốc hiệu & Tiêu ngữ */
-        .header-right h4 { 
-            margin: 0; 
-            font-size: 15px; 
-            text-transform: uppercase; 
-            font-weight: bold; /* In đậm */
-        }
-        .header-right h5 { 
-            margin: 0; 
-            font-size: 15px; 
-            font-weight: bold; /* In đậm */
-            font-style: normal; /* Không in nghiêng */
-            margin-top: 5px; 
-        }
+        .header-right h4 { margin: 0; font-size: 15px; text-transform: uppercase; font-weight: bold; }
+        .header-right h5 { margin: 0; font-size: 15px; font-weight: bold; font-style: normal; margin-top: 5px; }
         
         /* Tiêu đề Lịch */
         .main-title { text-align: center; color: #0d6efd; text-transform: uppercase; font-weight: bold; margin: 25px 0 5px 0; font-size: 24px; }
@@ -152,7 +137,7 @@
 
         <div id="tabExcel" style="display: none;">
             <div class="alert alert-info">
-                <i class="fas fa-info-circle"></i> Đọc được cả <b>Ngày dạng Chữ</b> và <b>Ngày dạng Số</b> trong Excel.
+                <i class="fas fa-info-circle"></i> File Excel cần có thứ tự cột: <b>Ngày | Buổi | Giờ | Nội Dung | Người Thực Hiện</b>
             </div>
             <div class="row align-items-end">
                 <div class="col-md-4"><button class="btn btn-outline-primary w-100" onclick="downloadSample()"><i class="fas fa-download"></i> Tải File Mẫu</button></div>
@@ -185,11 +170,11 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    // --- HÀM XỬ LÝ NGÀY ---
+    // --- HÀM XỬ LÝ DATE (QUAN TRỌNG ĐỂ KHỚP DỮ LIỆU) ---
     function normalizeDate(input) {
-        if (input === undefined || input === null || input === "") return "";
+        if (!input) return "";
         
-        // 1. NẾU LÀ SỐ (Excel Serial Date)
+        // 1. Nếu là số Excel Serial (ví dụ: 45321)
         if (typeof input === 'number') {
             const dateInfo = window.XLSX.SSF.parse_date_code(input);
             if (dateInfo) {
@@ -200,20 +185,40 @@
             }
         }
         
-        // 2. NẾU LÀ CHỮ
+        // 2. Nếu là chuỗi Text
         let str = input.toString().trim();
+        // Xử lý dd/mm/yyyy hoặc d/m/yyyy
         if (str.includes('/')) {
             const parts = str.split('/');
             if (parts.length === 3) {
                 let d = parts[0].padStart(2, '0');
                 let m = parts[1].padStart(2, '0');
                 let y = parts[2];
-                if (y.length === 2) y = "20" + y;
+                if (y.length === 2) y = "20" + y; // Xử lý năm tắt 26 -> 2026
                 return `${y}-${m}-${d}`;
             }
         }
-        if (str.includes('-') && str.length >= 10) return str;
+        // Xử lý dd-mm-yyyy
+        if (str.includes('-')) {
+            const parts = str.split('-');
+            if (parts.length === 3 && parts[0].length <= 2) { // dd-mm-yyyy
+                 let d = parts[0].padStart(2, '0');
+                 let m = parts[1].padStart(2, '0');
+                 let y = parts[2];
+                 return `${y}-${m}-${d}`;
+            }
+            // Nếu đã là yyyy-mm-dd thì giữ nguyên
+            if(parts[0].length === 4) return str;
+        }
         return "";
+    }
+
+    // --- CHUẨN HÓA BUỔI (Sáng/Chiều) ---
+    function normalizeSession(str) {
+        if(!str) return "Sáng";
+        let s = str.toString().toLowerCase().trim();
+        if(s.includes("ch") || s.includes("chiều") || s.includes("chiêu")) return "Chiều";
+        return "Sáng";
     }
 
     function convertToMinutes(timeStr) {
@@ -224,13 +229,18 @@
         let m = numbers[1] ? parseInt(numbers[1]) : 0;
         return h * 60 + m;
     }
-    function smartSort(a, b) { return convertToMinutes(a.time) - convertToMinutes(b.time); }
+
+    function smartSort(a, b) { 
+        return convertToMinutes(a.time) - convertToMinutes(b.time); 
+    }
+
     function getMonday(d) {
         d = new Date(d);
         var day = d.getDay();
         var diff = d.getDate() - day + (day == 0 ? -6 : 1);
         return new Date(d.setDate(diff));
     }
+    
     function getDayName(i) { return ["Chủ Nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"][i]; }
 
     // --- LOGIC UI ---
@@ -269,15 +279,26 @@
         const time = document.getElementById("inputTime").value;
         const content = document.getElementById("inputContent").value;
         const person = document.getElementById("inputPerson").value;
+        
         if(!date || !content) { alert("Thiếu ngày hoặc nội dung!"); return; }
-        push(ref(db, 'schedules'), { date, session, time, content, person })
-        .then(() => { alert("Đã lưu!"); document.getElementById("inputContent").value = ""; });
+        
+        push(ref(db, 'schedules'), { 
+            date, 
+            session: normalizeSession(session), // Chuẩn hóa luôn khi lưu
+            time, 
+            content: content.trim(), 
+            person 
+        }).then(() => { 
+            alert("Đã lưu!"); 
+            document.getElementById("inputContent").value = ""; 
+        });
     };
 
     window.downloadSample = function() {
         const ws_data = [
             ["Ngay (dd/mm/yyyy)", "Buoi", "Gio", "NoiDung", "NguoiThucHien"],
-            ["16/02/2026", "Sáng", "07:00", "Chào cờ đầu tuần", "BGH"]
+            ["16/02/2026", "Sáng", "07:00", "Chào cờ đầu tuần", "BGH"],
+            ["16/02/2026", "Chiều", "14:00", "Họp tổ chuyên môn", "Toàn trường"]
         ];
         const ws = XLSX.utils.aoa_to_sheet(ws_data);
         const wb = XLSX.utils.book_new();
@@ -285,30 +306,46 @@
         XLSX.writeFile(wb, "Mau_Lich_Cong_Tac.xlsx");
     };
 
-    // --- HÀM NHẬP EXCEL ---
+    // --- HÀM NHẬP EXCEL (ĐÃ CẢI TIẾN) ---
     window.processExcel = function() {
         const fileInput = document.getElementById('excelFile');
         if(!fileInput.files.length) { alert("Chưa chọn file!"); return; }
+        
         const reader = new FileReader();
         reader.onload = function(e) {
             const data = new Uint8Array(e.target.result);
             const workbook = XLSX.read(data, {type: 'array'});
             
-            // raw: true -> Giữ nguyên dữ liệu gốc
+            // raw: true giúp giữ nguyên giá trị gốc để normalizeDate xử lý
             const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1, raw: true });
             
             let count = 0;
+            // Bắt đầu từ dòng 1 (bỏ tiêu đề)
             for(let i = 1; i < jsonData.length; i++) {
                 let row = jsonData[i];
+                if(!row || row.length === 0) continue;
+
+                // Chuẩn hóa Ngày
                 let dateStr = normalizeDate(row[0]); 
-                if(!dateStr || !row[3]) continue; 
+                // Kiểm tra nội dung (cột 3)
+                let contentRaw = row[3] ? row[3].toString().trim() : "";
+                
+                if(!dateStr || contentRaw === "") continue; 
+
+                // Chuẩn hóa Buổi (cột 1) - Tự động nhận diện 'chieu', 'CHIEU', 'Sáng '
+                let sessionRaw = row[1];
+                let sessionFinal = normalizeSession(sessionRaw);
+
+                // Chuẩn hóa Giờ và Người (cột 2 và 4)
+                let timeStr = row[2] ? row[2].toString().trim() : "";
+                let personStr = row[4] ? row[4].toString().trim() : "";
 
                 push(ref(db, 'schedules'), {
                     date: dateStr, 
-                    session: row[1] || "Sáng", 
-                    time: row[2] ? row[2].toString() : "", 
-                    content: row[3], 
-                    person: row[4] || ""
+                    session: sessionFinal, 
+                    time: timeStr, 
+                    content: contentRaw, 
+                    person: personStr
                 });
                 count++;
             }
@@ -321,17 +358,32 @@
     window.loadSchedule = function() {
         const viewDateStr = document.getElementById("viewDate").value;
         if(!viewDateStr) return;
-        const startDate = new Date(viewDateStr);
+        
+        // Phân tích ngày thủ công để tránh lỗi lệch múi giờ UTC/Local
+        const [vY, vM, vD] = viewDateStr.split("-").map(Number);
+        const startDateObj = new Date(vY, vM - 1, vD); // Tháng trong JS bắt đầu từ 0
+        
         onValue(ref(db, 'schedules'), (snapshot) => {
             const allData = [];
             snapshot.forEach(child => allData.push(child.val()));
+            
             let html = "";
+            let startWeekDate = new Date(startDateObj); // Copy object
+
             for (let i = 0; i < 7; i++) {
-                let currDate = new Date(startDate);
-                currDate.setDate(startDate.getDate() + i);
-                let yyyy = currDate.getFullYear(), mm = String(currDate.getMonth()+1).padStart(2,'0'), dd = String(currDate.getDate()).padStart(2,'0');
+                // Tạo đối tượng ngày cho từng thứ trong tuần
+                let currDate = new Date(startWeekDate);
+                currDate.setDate(startWeekDate.getDate() + i);
+                
+                let yyyy = currDate.getFullYear();
+                let mm = String(currDate.getMonth()+1).padStart(2,'0');
+                let dd = String(currDate.getDate()).padStart(2,'0');
+                
                 let dateKey = `${yyyy}-${mm}-${dd}`;
+                
+                // Lọc dữ liệu theo dateKey chính xác
                 let tasks = allData.filter(t => t.date === dateKey);
+                
                 html += `<tr>
                     <td class="col-thu">${getDayName(currDate.getDay())}</td>
                     <td class="col-ngay">${dd}/${mm}/${yyyy}</td>
@@ -340,17 +392,44 @@
                 </tr>`;
             }
             document.getElementById("scheduleBody").innerHTML = html;
-            let endDate = new Date(startDate); endDate.setDate(startDate.getDate() + 6);
-            document.getElementById("scheduleDateRange").innerText = `(Từ ngày ${startDate.getDate()}/${startDate.getMonth()+1}/${startDate.getFullYear()} đến ngày ${endDate.getDate()}/${endDate.getMonth()+1}/${endDate.getFullYear()})`;
+            
+            let endDate = new Date(startWeekDate); 
+            endDate.setDate(startWeekDate.getDate() + 6);
+            
+            let endD = String(endDate.getDate()).padStart(2,'0');
+            let endM = String(endDate.getMonth()+1).padStart(2,'0');
+            let endY = endDate.getFullYear();
+            
+            let startD = String(startWeekDate.getDate()).padStart(2,'0');
+            let startM = String(startWeekDate.getMonth()+1).padStart(2,'0');
+            let startY = startWeekDate.getFullYear();
+
+            document.getElementById("scheduleDateRange").innerText = `(Từ ngày ${startD}/${startM}/${startY} đến ngày ${endD}/${endM}/${endY})`;
         });
     };
 
     function renderTaskList(tasks) {
-        return tasks.map(t => `<div class="task-item">${t.time?`<span class="task-time">${t.time}:</span>`:""} ${t.content} ${t.person?`<span class="task-person">(${t.person})</span>`:""}</div>`).join("");
+        if(tasks.length === 0) return "";
+        return tasks.map(t => `
+            <div class="task-item">
+                ${t.time ? `<span class="task-time">${t.time}:</span>` : ""} 
+                ${t.content} 
+                ${t.person ? `<span class="task-person">(${t.person})</span>` : ""}
+            </div>
+        `).join("");
     }
 
-    document.getElementById("viewDate").valueAsDate = getMonday(new Date());
+    // Khởi động: Chọn thứ 2 của tuần hiện tại
+    const today = new Date();
+    const monday = getMonday(today);
+    // Chuyển thành chuỗi yyyy-mm-dd cho input date
+    const mY = monday.getFullYear();
+    const mM = String(monday.getMonth()+1).padStart(2,'0');
+    const mD = String(monday.getDate()).padStart(2,'0');
+    
+    document.getElementById("viewDate").value = `${mY}-${mM}-${mD}`;
     loadSchedule();
+
 </script>
 
 </body>
