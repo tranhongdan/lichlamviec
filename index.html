@@ -254,7 +254,7 @@
                             <th>Tên Trường</th>
                             <th>User Admin</th>
                             <th>Pass Admin</th>
-                            <th>Ngày tạo</th>
+                            <th>Link Xem</th>
                             <th style="width: 140px;">Thao tác</th>
                         </tr>
                     </thead>
@@ -310,6 +310,33 @@
 
     function getDbPath(endpoint) {
         return (currentSchoolId === 'root') ? endpoint : `schools_data/${currentSchoolId}/${endpoint}`;
+    }
+
+    // --- INIT CHECK URL PARAM ---
+    async function checkUrlParams() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const schoolParam = urlParams.get('school');
+
+        if (schoolParam) {
+            // Load component school data from registry
+            const snapshot = await get(ref(db, 'schools_registry/' + schoolParam));
+            if (snapshot.exists()) {
+                const schoolData = snapshot.val();
+                currentSchoolId = schoolParam;
+                currentSchoolName = schoolData.name;
+                
+                // Update UI for guest
+                document.getElementById('headerSchoolName').innerText = currentSchoolName;
+                document.getElementById('excelTargetSchool').innerText = currentSchoolName;
+                loadSchedule();
+            } else {
+                alert("Không tìm thấy trường này! Quay về mặc định.");
+                window.location.href = window.location.pathname;
+            }
+        } else {
+            // Root school
+            loadSchedule();
+        }
     }
 
     // --- LOGIN ---
@@ -390,11 +417,8 @@
     }
 
     window.logoutAdmin = () => { 
-        currentUser = null; currentRole = null; currentSchoolId = 'root'; currentSchoolName = 'TRƯỜNG THPT SỐ 1 TRẦN PHÚ';
-        document.getElementById("adminPanel").style.display = "none";
-        document.getElementById("headerSchoolName").innerText = currentSchoolName;
-        document.getElementById("subSchoolName").style.display = "none";
-        loadSchedule();
+        // Reload page to reset all states including URL params logic
+        window.location.href = window.location.origin + window.location.pathname;
     };
 
     // --- LOGIC LỊCH ---
@@ -572,7 +596,7 @@
     window.editItem = (k,d,s,t,c,p) => { document.getElementById("editKey").value = k; document.getElementById("inputDate").value = d; document.getElementById("inputSession").value = s; document.getElementById("inputTime").value = t; document.getElementById("inputContent").value = c; document.getElementById("inputPerson").value = p; switchTab('manual'); };
     window.deleteItem = (k) => confirm("Xóa?") && remove(ref(db, getDbPath('schedules/'+k)));
     
-    // --- QUẢN LÝ TRƯỜNG (CẬP NHẬT: SỬA/XÓA) ---
+    // --- QUẢN LÝ TRƯỜNG (SỬA/XÓA) ---
     window.saveSchoolInfo = () => {
         if (currentRole !== 'root') return;
         const editingKey = document.getElementById("editingSchoolKey").value;
@@ -584,23 +608,15 @@
         name = name.toUpperCase();
 
         if (editingKey) {
-            // Chế độ Sửa (Giữ nguyên username, chỉ đổi tên và pass)
-            update(ref(db, 'schools_registry/' + editingKey), { name: name, password: code })
-            .then(() => {
-                alert("Đã cập nhật thông tin trường!");
-                cancelSchoolEdit();
+            update(ref(db, 'schools_registry/' + editingKey), { name: name, password: code }).then(() => {
+                alert("Đã cập nhật!"); cancelSchoolEdit();
             });
         } else {
-            // Chế độ Tạo Mới
             const username = removeVietnameseTones(name); 
             get(ref(db, 'schools_registry/'+username)).then(snap => {
-                if (snap.exists()) {
-                    alert("Trường này đã tồn tại!");
-                } else {
-                    const newSchoolData = { name: name, username: username, password: code, createdAt: new Date().toISOString() };
-                    set(ref(db, 'schools_registry/' + username), newSchoolData).then(() => {
-                        alert(`Đã tạo!\nUser: ${username}\nPass: ${code}`);
-                        cancelSchoolEdit();
+                if (snap.exists()) { alert("Trường này đã tồn tại!"); } else {
+                    set(ref(db, 'schools_registry/' + username), { name: name, username: username, password: code, createdAt: new Date().toISOString() }).then(() => {
+                        alert(`Đã tạo!\nUser: ${username}\nPass: ${code}`); cancelSchoolEdit();
                     });
                 }
             });
@@ -612,46 +628,36 @@
         document.getElementById("newSchoolName").value = name;
         document.getElementById("newSchoolCode").value = password;
         
-        document.getElementById("schoolFormTitle").innerText = "CẬP NHẬT THÔNG TIN TRƯỜNG";
-        document.getElementById("schoolFormTitle").classList.remove("text-danger");
-        document.getElementById("schoolFormTitle").classList.add("text-warning");
-        
-        document.getElementById("btnSaveSchool").innerText = "CẬP NHẬT";
-        document.getElementById("btnSaveSchool").classList.remove("btn-danger");
-        document.getElementById("btnSaveSchool").classList.add("btn-warning");
-        
+        const title = document.getElementById("schoolFormTitle");
+        title.innerText = "CẬP NHẬT THÔNG TIN TRƯỜNG"; title.classList.remove("text-danger"); title.classList.add("text-warning");
+        const btn = document.getElementById("btnSaveSchool");
+        btn.innerText = "CẬP NHẬT"; btn.classList.remove("btn-danger"); btn.classList.add("btn-warning");
         document.getElementById("btnCancelSchoolEdit").style.display = "block";
         document.getElementById("schoolHelpText").style.display = "none";
     };
 
     window.cancelSchoolEdit = () => {
-        document.getElementById("editingSchoolKey").value = "";
-        document.getElementById("newSchoolName").value = "";
-        document.getElementById("newSchoolCode").value = "1234";
-
-        document.getElementById("schoolFormTitle").innerText = "TẠO TRƯỜNG THÀNH PHẦN MỚI";
-        document.getElementById("schoolFormTitle").classList.add("text-danger");
-        document.getElementById("schoolFormTitle").classList.remove("text-warning");
-
-        document.getElementById("btnSaveSchool").innerText = "TẠO NGAY";
-        document.getElementById("btnSaveSchool").classList.add("btn-danger");
-        document.getElementById("btnSaveSchool").classList.remove("btn-warning");
-
+        document.getElementById("editingSchoolKey").value = ""; document.getElementById("newSchoolName").value = ""; document.getElementById("newSchoolCode").value = "1234";
+        const title = document.getElementById("schoolFormTitle");
+        title.innerText = "TẠO TRƯỜNG THÀNH PHẦN MỚI"; title.classList.add("text-danger"); title.classList.remove("text-warning");
+        const btn = document.getElementById("btnSaveSchool");
+        btn.innerText = "TẠO NGAY"; btn.classList.add("btn-danger"); btn.classList.remove("btn-warning");
         document.getElementById("btnCancelSchoolEdit").style.display = "none";
         document.getElementById("schoolHelpText").style.display = "block";
     };
 
     window.deleteSchool = (username) => {
-        if (!confirm("CẢNH BÁO NGUY HIỂM:\n\nXóa trường sẽ xóa VĨNH VIỄN toàn bộ LỊCH và TÀI KHOẢN của trường đó.\n\nBạn có chắc chắn muốn xóa không?")) return;
-        
-        const inputPass = prompt("Nhập mật khẩu ROOT ADMIN (123456) để xác nhận xóa:");
-        if (inputPass !== '123456') { alert("Sai mật khẩu xác nhận!"); return; }
-
-        // Xóa thông tin đăng ký
+        if (!confirm("CẢNH BÁO: Xóa trường sẽ xóa VĨNH VIỄN toàn bộ dữ liệu của trường đó. Tiếp tục?")) return;
+        const inputPass = prompt("Nhập mật khẩu ROOT (123456) để xác nhận:");
+        if (inputPass !== '123456') { alert("Sai mật khẩu!"); return; }
         remove(ref(db, 'schools_registry/' + username));
-        // Xóa dữ liệu lịch và tài khoản con
         remove(ref(db, 'schools_data/' + username));
-        alert("Đã xóa hoàn toàn trường khỏi hệ thống!");
+        alert("Đã xóa trường!");
+    };
+
+    window.copyLink = (username) => {
+        const link = window.location.origin + window.location.pathname + "?school=" + username;
+        navigator.clipboard.writeText(link).then(() => alert("Đã copy link: " + link));
     };
 
     function loadSchoolsList() {
@@ -663,7 +669,7 @@
                     <td>${s.name}</td>
                     <td class="fw-bold text-primary">${s.username}</td>
                     <td>${s.password}</td>
-                    <td>${s.createdAt ? s.createdAt.split('T')[0] : ''}</td>
+                    <td><button class="btn btn-sm btn-info" onclick="copyLink('${s.username}')"><i class="fas fa-link"></i> Copy Link</button></td>
                     <td>
                         <button class="btn btn-sm btn-warning me-1" onclick="startEditSchool('${s.username}', '${s.name}', '${s.password}')">Sửa</button>
                         <button class="btn btn-sm btn-danger" onclick="deleteSchool('${s.username}')">Xóa</button>
@@ -674,11 +680,13 @@
         });
     }
 
-    loadSchedule();
+    // Init URL Check
+    checkUrlParams();
     window.deleteWeekConfig = window.deleteWeekConfig;
     window.startEditSchool = window.startEditSchool;
     window.cancelSchoolEdit = window.cancelSchoolEdit;
     window.deleteSchool = window.deleteSchool;
+    window.copyLink = window.copyLink;
     
     const originalSwitchTab = window.switchTab;
     window.switchTab = function(n) { originalSwitchTab(n); if (n === 'accounts') loadSubAccounts(); }
