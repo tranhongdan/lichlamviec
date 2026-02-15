@@ -134,7 +134,18 @@
         </div>
 
         <div id="tabExcel" style="display: none;">
-            <div class="alert alert-info">Chức năng nhập từ Excel đang được cập nhật cho phiên bản đa trường.</div>
+            <div class="card card-body border-success">
+                <h5 class="text-success fw-bold"><i class="fas fa-file-excel"></i> NHẬP LỊCH TỪ EXCEL</h5>
+                <p class="mb-2">Vui lòng chuẩn bị file Excel có tiêu đề cột (dòng 1) như sau: <b>Ngày, Buổi, Giờ, Nội dung, Người thực hiện</b></p>
+                <div class="alert alert-warning small py-2">
+                    Lưu ý: Hệ thống sẽ nhập dữ liệu vào <b><span id="excelTargetSchool">...</span></b>. Vui lòng kiểm tra kỹ.
+                </div>
+                <div class="input-group mb-3">
+                    <input type="file" id="excelFile" class="form-control" accept=".xlsx, .xls">
+                    <button class="btn btn-success fw-bold" onclick="processExcelImport()"><i class="fas fa-upload"></i> TẢI LÊN & NHẬP LIỆU</button>
+                </div>
+                <small class="text-muted">Định dạng ngày hỗ trợ: 15/02/2026 hoặc định dạng Date của Excel.</small>
+            </div>
         </div>
 
         <div id="tabList" style="display: none;">
@@ -182,10 +193,6 @@
                         <button class="btn btn-danger w-100 fw-bold" onclick="createNewSchool()">TẠO NGAY</button>
                     </div>
                 </div>
-                <div class="mt-2 small text-muted">
-                    * Hệ thống sẽ tự động tạo tên đăng nhập bằng cách viết liền không dấu tên trường.<br>
-                    Ví dụ: <b>Trường THPT Chu Văn An</b> -> User: <b>truongthptchuvanan</b>
-                </div>
             </div>
 
             <h6 class="fw-bold mt-4">DANH SÁCH CÁC TRƯỜNG ĐÃ TẠO</h6>
@@ -228,11 +235,10 @@
 
     // --- TRẠNG THÁI HỆ THỐNG ---
     let currentUser = null; 
-    let currentRole = null; // 'root', 'school_admin', 'sub_account'
-    let currentSchoolId = 'root'; // 'root' hoặc mã trường (ví dụ: truongthptchuvanan)
-    let currentSchoolName = 'TRƯỜNG THPT SỐ 1 TRẦN PHÚ'; // Tên mặc định
+    let currentRole = null; 
+    let currentSchoolId = 'root'; 
+    let currentSchoolName = 'TRƯỜNG THPT SỐ 1 TRẦN PHÚ'; 
 
-    // --- HÀM TIỆN ÍCH ---
     function removeVietnameseTones(str) {
         str = str.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g,"a"); 
         str = str.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g,"e"); 
@@ -259,22 +265,20 @@
         return monday.toISOString().split('T')[0];
     }
 
-    // --- ĐỊNH TUYẾN DỮ LIỆU (QUAN TRỌNG) ---
-    // Hàm này quyết định đọc/ghi dữ liệu vào đâu dựa trên trường đang đăng nhập
+    // --- ĐỊNH TUYẾN DỮ LIỆU ---
     function getDbPath(endpoint) {
         if (currentSchoolId === 'root') {
-            return endpoint; // Giữ nguyên đường dẫn cũ cho trường gốc
+            return endpoint;
         } else {
-            return `schools_data/${currentSchoolId}/${endpoint}`; // Dữ liệu trường thành phần
+            return `schools_data/${currentSchoolId}/${endpoint}`; 
         }
     }
 
-    // --- QUẢN LÝ ĐĂNG NHẬP (LOGIC MỚI) ---
+    // --- QUẢN LÝ ĐĂNG NHẬP ---
     window.toggleAdmin = function() {
         const inputLogin = prompt("Nhập thông tin đăng nhập:\n- Admin Gốc: 123456\n- Admin Trường: [TênViếtLiền][MãBảoMật]\n- Tài khoản con: [Tên][Mã]");
         if (!inputLogin) return;
 
-        // 1. Check Root Admin
         if (inputLogin === "123456") {
             setSession('root', 'root', 'ROOT ADMIN', 'TRƯỜNG THPT SỐ 1 TRẦN PHÚ');
             return;
@@ -283,8 +287,7 @@
         const dbRef = ref(db);
         get(dbRef).then((snapshot) => {
             let found = false;
-
-            // 2. Check Root Sub-accounts (Nhân viên trường gốc)
+            // Check Root Sub-accounts
             const rootSubs = snapshot.child('subAccounts').val();
             if (rootSubs) {
                 for (const [key, val] of Object.entries(rootSubs)) {
@@ -296,7 +299,7 @@
             }
             if (found) return;
 
-            // 3. Check School Registries (Admin các trường thành phần)
+            // Check School Registries
             const schools = snapshot.child('schools_registry').val();
             if (schools) {
                 for (const [key, val] of Object.entries(schools)) {
@@ -308,15 +311,13 @@
             }
             if (found) return;
 
-            // 4. Check School Sub-accounts (Nhân viên các trường thành phần)
-            // Quét toàn bộ data các trường để tìm user con (Hơi nặng nhưng chấp nhận được cho quy mô nhỏ)
+            // Check School Sub-accounts
             const schoolsData = snapshot.child('schools_data').val();
             if (schoolsData) {
                 for (const [schId, schData] of Object.entries(schoolsData)) {
                     if (schData.subAccounts) {
                         for (const [subKey, subVal] of Object.entries(schData.subAccounts)) {
                             if (subVal.username + subVal.code === inputLogin) {
-                                // Tìm thấy! Lấy tên trường từ registry
                                 const schoolName = schools[schId] ? schools[schId].name : "Trường Thành Phần";
                                 setSession(schId, 'sub_account', subVal.username, schoolName);
                                 found = true; break;
@@ -337,8 +338,9 @@
         currentSchoolId = schoolId;
         currentSchoolName = schoolName;
         
-        // Update UI
         document.getElementById("headerSchoolName").innerText = schoolName;
+        document.getElementById("excelTargetSchool").innerText = schoolName; // Cập nhật tên trường trong tab Excel
+
         if (schoolId !== 'root') {
             document.getElementById("subSchoolName").innerText = schoolName;
             document.getElementById("subSchoolName").style.display = "block";
@@ -347,7 +349,7 @@
         }
 
         showPanel();
-        loadSchedule(); // Reload lịch của trường tương ứng
+        loadSchedule(); 
     }
 
     function showPanel() {
@@ -359,30 +361,26 @@
         if (currentRole === 'school_admin') badgeText = "QUẢN TRỊ TRƯỜNG";
         document.getElementById("adminBadge").innerText = badgeText;
 
-        // Phân quyền hiển thị Tab
         const isAdmin = (currentRole === 'root' || currentRole === 'school_admin');
         const isRoot = (currentRole === 'root');
 
         document.querySelectorAll('.admin-only').forEach(el => el.style.display = isAdmin ? 'block' : 'none');
-        document.querySelectorAll('.root-only').forEach(el => el.style.display = isRoot ? 'block' : 'none'); // Chỉ root thấy tab quản lý trường
+        document.querySelectorAll('.root-only').forEach(el => el.style.display = isRoot ? 'block' : 'none');
 
         switchTab('manual');
-        if (isRoot) loadSchoolsList(); // Nếu là root thì tải danh sách trường
+        if (isRoot) loadSchoolsList();
     }
 
     window.logoutAdmin = () => { 
-        // Reset về mặc định
         currentUser = null; currentRole = null; currentSchoolId = 'root'; 
         currentSchoolName = 'TRƯỜNG THPT SỐ 1 TRẦN PHÚ';
-        
         document.getElementById("adminPanel").style.display = "none";
         document.getElementById("headerSchoolName").innerText = currentSchoolName;
         document.getElementById("subSchoolName").style.display = "none";
-        
-        loadSchedule(); // Load lại lịch gốc
+        loadSchedule();
     };
 
-    // --- LOGIC LỊCH (Đã cập nhật để dùng getDbPath) ---
+    // --- LOGIC LỊCH ---
     window.loadSchedule = function(isUserSelected = false) {
         let viewDateStr = document.getElementById("viewDate").value;
         if (!viewDateStr && !isUserSelected) {
@@ -393,24 +391,20 @@
         const filterDate = document.getElementById("filterListDate").value;
         const todayStr = new Date().toISOString().split('T')[0];
         
-        // Load General Task
         onValue(ref(db, getDbPath('generalTask')), (s) => {
             document.getElementById("displayGeneralTask").innerText = s.val() || "LỊCH TRƯỜNG " + currentSchoolName.toUpperCase();
         });
 
-        // Load Schedules
         onValue(ref(db, getDbPath('schedules')), (snapshot) => {
             const allData = [];
             snapshot.forEach(child => { let v = child.val(); v.key = child.key; allData.push(v); });
 
-            // Tab List
             const listData = filterDate ? allData.filter(i => i.date === filterDate) : allData;
             document.getElementById("manageTableBody").innerHTML = listData.sort((a,b) => new Date(a.date)-new Date(b.date)).map(item => `
                 <tr><td>${item.date}</td><td>${item.session}</td><td>${item.time||''}</td><td>${item.content}</td><td>${item.person||''}</td>
                 <td><button class="btn btn-xs btn-primary" onclick="editItem('${item.key}','${item.date}','${item.session}','${item.time}','${item.content}','${item.person}')">Sửa</button>
                 <button class="btn btn-xs btn-danger" onclick="deleteItem('${item.key}')">Xóa</button></td></tr>`).join("");
 
-            // Main Table
             let html = "";
             let start = new Date(viewDateStr);
             for (let i = 0; i < 7; i++) {
@@ -437,7 +431,7 @@
             <div class="task-content-wrapper"><b>${t.time?t.time+':':''}</b> ${t.content} <i>${t.person?'('+t.person+')':''}</i></div></div>`).join("");
     }
 
-    // --- CÁC HÀM THAO TÁC DATA (Dùng getDbPath) ---
+    // --- CÁC HÀM THAO TÁC DATA ---
     window.switchTab = (n) => {
         ['general','manual','excel','list','accounts','schools'].forEach(id => {
             const el = document.getElementById('tab'+id.charAt(0).toUpperCase()+id.slice(1));
@@ -446,21 +440,83 @@
         document.querySelectorAll('#adminTabs .nav-link').forEach(l => l.classList.toggle('active', l.innerText.toLowerCase().includes(n === 'schools' ? 'quản lý trường' : (n === 'excel' ? 'excel' : (n === 'list' ? 'dữ liệu' : (n === 'accounts' ? 'tài khoản' : (n === 'general' ? 'chung' : 'nhập lịch')))))));
     };
     
-    // Quản lý Sub Accounts (Tài khoản con của trường hiện tại)
+    // --- XỬ LÝ EXCEL MỚI (TỰ ĐỘNG THEO TRƯỜNG) ---
+    function excelDateToJSDate(serial) {
+        // Nếu là số (Excel Serial Date)
+        if (typeof serial === 'number') {
+            const utc_days  = Math.floor(serial - 25569);
+            const utc_value = utc_days * 86400;                                      
+            const date_info = new Date(utc_value * 1000);
+            return date_info.toISOString().split('T')[0];
+        }
+        // Nếu là chuỗi (dd/mm/yyyy)
+        if (typeof serial === 'string') {
+            const parts = serial.split('/');
+            if (parts.length === 3) return `${parts[2]}-${parts[1]}-${parts[0]}`; // Chuyển thành yyyy-mm-dd
+            return serial; // Trả về nguyên gốc nếu không parse được (hy vọng là đúng format)
+        }
+        return '';
+    }
+
+    window.processExcelImport = () => {
+        const fileInput = document.getElementById('excelFile');
+        const file = fileInput.files[0];
+        if (!file) { alert("Vui lòng chọn file Excel!"); return; }
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+            const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+
+            if (jsonData.length === 0) { alert("File không có dữ liệu!"); return; }
+
+            let count = 0;
+            // Xác định đường dẫn DB dựa trên trường đang đăng nhập
+            const targetPath = getDbPath('schedules');
+
+            jsonData.forEach(row => {
+                // Map dữ liệu từ cột tiếng Việt sang key
+                const rawDate = row['Ngày'] || row['ngay'] || row['date'];
+                const session = row['Buổi'] || row['buoi'] || 'Sáng';
+                const time = row['Giờ'] || row['gio'] || '';
+                const content = row['Nội dung'] || row['noi dung'] || row['content'];
+                const person = row['Người thực hiện'] || row['nguoi thuc hien'] || '';
+
+                if (rawDate && content) {
+                    const finalDate = excelDateToJSDate(rawDate);
+                    const newData = {
+                        date: finalDate,
+                        session: session,
+                        time: time,
+                        content: content,
+                        person: person,
+                        creator: currentUser + " (Excel)"
+                    };
+                    push(ref(db, targetPath), newData);
+                    count++;
+                }
+            });
+
+            alert(`Đã nhập thành công ${count} lịch công tác vào: ${currentSchoolName}`);
+            fileInput.value = ''; // Reset input
+            loadSchedule(); // Load lại lịch
+        };
+        reader.readAsArrayBuffer(file);
+    };
+
+    // --- CÁC HÀM CŨ ---
     window.createSubAccount = () => {
         const username = document.getElementById("accUsername").value.trim();
         const code = document.getElementById("accCode").value.trim();
         if(username && code.length === 4) { 
             push(ref(db, getDbPath('subAccounts')), { username, code }); 
             alert("Đã tạo tài khoản con cho trường hiện tại!"); 
-            document.getElementById("accUsername").value = '';
-            document.getElementById("accCode").value = '';
+            document.getElementById("accUsername").value = ''; document.getElementById("accCode").value = '';
         }
     };
 
-    // Listener cho bảng tài khoản con
-    // Lưu ý: Cần update listener khi đổi trường, nhưng để đơn giản ta gọi lại onValue mỗi khi chuyển Tab Accounts hoặc loadSchedule
-    // Ở đây ta đặt listener động
     function loadSubAccounts() {
         onValue(ref(db, getDbPath('subAccounts')), (snap) => {
             let h = "";
@@ -468,10 +524,6 @@
             document.getElementById("accountTableBody").innerHTML = h;
         });
     }
-    // Gọi loadSubAccounts khi switchTab hoặc login xong. Để đơn giản ta gắn vào global scope, nó sẽ chạy realtime cho trường hiện tại
-    // Tuy nhiên do logic single page, ta sẽ gọi thủ công trong switchTab hoặc đơn giản là để nó chạy đè.
-    // Tạm thời fix cứng bằng cách gọi onValue mỗi lần loadSchedule (hơi dư thừa nhưng an toàn).
-    // Tối ưu: Đặt trong loadSchedule.
 
     window.removeAcc = (key) => confirm("Xóa tài khoản này?") && remove(ref(db, getDbPath(`subAccounts/${key}`)));
 
@@ -495,26 +547,18 @@
     window.deleteItem = (k) => confirm("Xóa lịch này?") && remove(ref(db, getDbPath('schedules/'+k)));
     window.saveGeneralTask = () => set(ref(db, getDbPath('generalTask')), document.getElementById("inputGeneralTask").value);
 
-    // --- CHỨC NĂNG QUẢN LÝ TRƯỜNG (CHỈ ROOT) ---
     window.createNewSchool = () => {
         if (currentRole !== 'root') return;
         const name = document.getElementById("newSchoolName").value.trim();
         const code = document.getElementById("newSchoolCode").value.trim();
-        
         if (!name || code.length < 4) { alert("Vui lòng nhập tên trường và mã bảo mật (4 số)!"); return; }
 
-        const username = removeVietnameseTones(name); // Tạo user từ tên trường
-        // Kiểm tra xem username đã tồn tại chưa
+        const username = removeVietnameseTones(name); 
         get(ref(db, 'schools_registry/'+username)).then(snap => {
             if (snap.exists()) {
-                alert("Trường này (hoặc mã tên đăng nhập này) đã tồn tại!");
+                alert("Trường này đã tồn tại!");
             } else {
-                const newSchoolData = {
-                    name: name,
-                    username: username,
-                    password: code,
-                    createdAt: new Date().toISOString()
-                };
+                const newSchoolData = { name: name, username: username, password: code, createdAt: new Date().toISOString() };
                 set(ref(db, 'schools_registry/' + username), newSchoolData).then(() => {
                     alert(`Đã tạo thành công!\nTrường: ${name}\nUser Admin: ${username}\nPass: ${code}`);
                     document.getElementById("newSchoolName").value = '';
@@ -528,26 +572,15 @@
             let html = "";
             snap.forEach(c => {
                 const s = c.val();
-                html += `<tr>
-                    <td>${s.name}</td>
-                    <td class="fw-bold text-primary">${s.username}</td>
-                    <td>${s.password}</td>
-                    <td>${s.createdAt ? s.createdAt.split('T')[0] : ''}</td>
-                </tr>`;
+                html += `<tr><td>${s.name}</td><td class="fw-bold text-primary">${s.username}</td><td>${s.password}</td><td>${s.createdAt ? s.createdAt.split('T')[0] : ''}</td></tr>`;
             });
             document.getElementById("schoolsListBody").innerHTML = html;
         });
     }
 
-    // Khởi tạo lần đầu (Load lịch root mặc định cho khách)
     loadSchedule();
-    
-    // Hack nhỏ để loadSubAccount đúng context
     const originalSwitchTab = window.switchTab;
-    window.switchTab = function(n) {
-        originalSwitchTab(n);
-        if (n === 'accounts') loadSubAccounts();
-    }
+    window.switchTab = function(n) { originalSwitchTab(n); if (n === 'accounts') loadSubAccounts(); }
 </script>
 </body>
 </html>
