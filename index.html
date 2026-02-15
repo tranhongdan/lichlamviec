@@ -67,7 +67,8 @@
         </div>
     </div>
 
-    <h2 class="main-title">LỊCH LÀM VIỆC</h2>
+    <h2 class="main-title" id="mainTitle">LỊCH LÀM VIỆC</h2>
+    
     <div id="subSchoolName" class="school-name-display" style="display:none"></div>
     <div id="scheduleDateRange" class="date-range-display"></div>
 
@@ -104,18 +105,31 @@
         <ul class="nav nav-tabs mb-3" id="adminTabs">
             <li class="nav-item"><button class="nav-link active" onclick="switchTab('general')">1. Công Việc Chung</button></li>
             <li class="nav-item"><button class="nav-link" onclick="switchTab('manual')">2. Nhập Lịch</button></li>
-            <li class="nav-item admin-only"><button class="nav-link" onclick="switchTab('excel')">3. Nhập từ Excel</button></li>
+            <li class="nav-item admin-only"><button class="nav-link" onclick="switchTab('excel')">3. Excel (Nhập/Xuất)</button></li>
             <li class="nav-item admin-only"><button class="nav-link" onclick="switchTab('list')">4. Tất cả dữ liệu</button></li>
             <li class="nav-item admin-only"><button class="nav-link" onclick="switchTab('accounts')">5. Tài khoản con</button></li>
             <li class="nav-item root-only" style="display:none"><button class="nav-link text-danger fw-bold" onclick="switchTab('schools')">6. QUẢN LÝ TRƯỜNG</button></li>
         </ul>
 
         <div id="tabGeneral">
-            <div class="input-group">
-                <span class="input-group-text fw-bold">Nội dung:</span>
-                <input type="text" id="inputGeneralTask" class="form-control">
-                <button class="btn btn-warning fw-bold" onclick="saveGeneralTask()">Lưu Thay Đổi</button>
+            <div class="row g-2">
+                <div class="col-md-3">
+                    <div class="input-group">
+                        <span class="input-group-text fw-bold">Tuần thứ:</span>
+                        <input type="number" id="inputWeekNumber" class="form-control" placeholder="VD: 20">
+                    </div>
+                </div>
+                <div class="col-md-7">
+                    <div class="input-group">
+                        <span class="input-group-text fw-bold">Nội dung chung:</span>
+                        <input type="text" id="inputGeneralTask" class="form-control" placeholder="Nhập tiêu đề công việc chung...">
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-warning fw-bold w-100" onclick="saveGeneralTask()">Lưu Thay Đổi</button>
+                </div>
             </div>
+            <p class="small text-muted mt-2 mb-0">* Nhập số tuần để hiển thị "LỊCH LÀM VIỆC (TUẦN XX)".</p>
         </div>
 
         <div id="tabManual" style="display: none;">
@@ -134,15 +148,30 @@
         </div>
 
         <div id="tabExcel" style="display: none;">
-            <div class="card card-body border-success">
-                <h5 class="text-success fw-bold"><i class="fas fa-file-excel"></i> NHẬP LỊCH TỪ EXCEL</h5>
-                <p class="mb-2">Vui lòng chuẩn bị file Excel có tiêu đề cột (dòng 1) như sau: <b>Ngày, Buổi, Giờ, Nội dung, Người thực hiện</b></p>
-                <div class="alert alert-warning small py-2">
-                    Lưu ý: Hệ thống sẽ nhập dữ liệu vào <b><span id="excelTargetSchool">...</span></b>. Vui lòng kiểm tra kỹ.
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card card-body border-success h-100">
+                        <h5 class="text-success fw-bold"><i class="fas fa-file-import"></i> NHẬP LỊCH TỪ EXCEL</h5>
+                        <p class="mb-2 small">File mẫu cần có cột: <b>Ngày, Buổi, Giờ, Nội dung, Người thực hiện</b></p>
+                        <div class="alert alert-warning small py-2 mb-2">
+                            Nhập vào: <b><span id="excelTargetSchool">...</span></b>
+                        </div>
+                        <div class="input-group">
+                            <input type="file" id="excelFile" class="form-control" accept=".xlsx, .xls">
+                            <button class="btn btn-success" onclick="processExcelImport()"><i class="fas fa-upload"></i> Nhập</button>
+                        </div>
+                    </div>
                 </div>
-                <div class="input-group mb-3">
-                    <input type="file" id="excelFile" class="form-control" accept=".xlsx, .xls">
-                    <button class="btn btn-success fw-bold" onclick="processExcelImport()"><i class="fas fa-upload"></i> TẢI LÊN & NHẬP LIỆU</button>
+
+                <div class="col-md-6">
+                    <div class="card card-body border-primary h-100">
+                        <h5 class="text-primary fw-bold"><i class="fas fa-file-download"></i> TẢI DỮ LIỆU (BACKUP)</h5>
+                        <p class="mb-2 small">Tải xuống toàn bộ lịch của trường hiện tại để lưu trữ hoặc chỉnh sửa.</p>
+                        <hr class="my-2">
+                        <button class="btn btn-primary fw-bold w-100" onclick="exportToExcel()">
+                            <i class="fas fa-download"></i> TẢI FILE DỮ LIỆU (.XLSX)
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -169,7 +198,7 @@
 
         <div id="tabAccounts" style="display: none;">
             <div class="card card-body mb-3 bg-light">
-                <p class="small mb-2"><i>* Tạo tài khoản cho giáo viên/nhân viên trong trường của bạn. Họ chỉ có quyền sửa lịch, không có quyền quản trị.</i></p>
+                <p class="small mb-2"><i>* Tạo tài khoản cho giáo viên/nhân viên.</i></p>
                 <div class="row g-2">
                     <div class="col-md-5"><input type="text" id="accUsername" class="form-control" placeholder="Tên tài khoản (ví dụ: gv01)"></div>
                     <div class="col-md-4"><input type="text" id="accCode" class="form-control" maxlength="4" placeholder="Mã bảo mật (4 số)"></div>
@@ -335,7 +364,7 @@
         loadSchedule();
     };
 
-    // --- LOGIC LỊCH ---
+    // --- LOGIC LỊCH & TUẦN ---
     window.loadSchedule = function(isUserSelected = false) {
         let viewDateStr = document.getElementById("viewDate").value;
         if (!viewDateStr && !isUserSelected) {
@@ -344,7 +373,18 @@
         const filterDate = document.getElementById("filterListDate").value;
         const todayStr = new Date().toISOString().split('T')[0];
         
-        onValue(ref(db, getDbPath('generalTask')), (s) => document.getElementById("displayGeneralTask").innerText = s.val() || "LỊCH TRƯỜNG " + currentSchoolName.toUpperCase());
+        // Load General Task
+        onValue(ref(db, getDbPath('generalTask')), (s) => document.getElementById("displayGeneralTask").innerText = s.val() || "LỊCH CÔNG TÁC " + currentSchoolName.toUpperCase());
+
+        // Load Week Number and Update Title
+        onValue(ref(db, getDbPath('currentWeek')), (snap) => {
+            const weekNum = snap.val();
+            // Nếu có số tuần thì hiển thị, nếu không thì để mặc định
+            const title = weekNum ? `LỊCH LÀM VIỆC (TUẦN ${weekNum})` : "LỊCH LÀM VIỆC";
+            document.getElementById("mainTitle").innerText = title;
+            // Cập nhật giá trị vào ô input nếu đang mở admin
+            if(document.getElementById("inputWeekNumber")) document.getElementById("inputWeekNumber").value = weekNum || "";
+        });
 
         onValue(ref(db, getDbPath('schedules')), (snapshot) => {
             const allData = [];
@@ -390,7 +430,7 @@
         document.querySelectorAll('#adminTabs .nav-link').forEach(l => l.classList.toggle('active', l.innerText.toLowerCase().includes(n === 'schools' ? 'quản lý trường' : (n === 'excel' ? 'excel' : (n === 'list' ? 'dữ liệu' : (n === 'accounts' ? 'tài khoản' : (n === 'general' ? 'chung' : 'nhập lịch')))))));
     };
     
-    // --- XỬ LÝ EXCEL & XÓA TOÀN BỘ ---
+    // --- IMPORT & EXPORT EXCEL ---
     function excelDateToJSDate(serial) {
         if (typeof serial === 'number') {
             const utc_days  = Math.floor(serial - 25569); const utc_value = utc_days * 86400;                                      
@@ -433,35 +473,60 @@
         reader.readAsArrayBuffer(file);
     };
 
-    // --- HÀM XÓA TOÀN BỘ DỮ LIỆU (CÓ XÁC THỰC) ---
+    // Hàm xuất dữ liệu ra Excel
+    window.exportToExcel = () => {
+        if (!confirm("Tải xuống toàn bộ lịch công tác của trường " + currentSchoolName + "?")) return;
+        
+        get(ref(db, getDbPath('schedules'))).then((snapshot) => {
+            if (!snapshot.exists()) { alert("Chưa có dữ liệu để xuất!"); return; }
+            
+            const exportData = [];
+            snapshot.forEach(child => {
+                const v = child.val();
+                exportData.push({
+                    "Ngày": v.date,
+                    "Buổi": v.session,
+                    "Giờ": v.time,
+                    "Nội dung": v.content,
+                    "Người thực hiện": v.person
+                });
+            });
+
+            // Sắp xếp theo ngày tăng dần
+            exportData.sort((a, b) => new Date(a['Ngày']) - new Date(b['Ngày']));
+
+            const worksheet = XLSX.utils.json_to_sheet(exportData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "LichCongTac");
+            
+            // Tạo tên file: LichCongTac_TenTruong_NgayHienTai.xlsx
+            const dateStr = new Date().toISOString().split('T')[0];
+            const safeName = removeVietnameseTones(currentSchoolName).replace(/\s/g, '_');
+            XLSX.writeFile(workbook, `LichCongTac_${safeName}_${dateStr}.xlsx`);
+        });
+    };
+
+    // --- HÀM XÓA TOÀN BỘ DỮ LIỆU ---
     window.deleteAllSchedule = async () => {
-        // Chỉ cho phép Admin Root hoặc Admin Trường
-        if (currentRole === 'sub_account') {
-            alert("Bạn không có quyền sử dụng chức năng này. Vui lòng liên hệ Admin!"); return;
-        }
-
-        if (!confirm("CẢNH BÁO NGUY HIỂM:\n\nBạn đang thực hiện xóa TẤT CẢ lịch công tác hiện có của trường: " + currentSchoolName + ".\n\nDữ liệu sẽ bị mất vĩnh viễn và KHÔNG THỂ khôi phục.\nBạn có chắc chắn muốn tiếp tục không?")) return;
-
-        const inputPass = prompt("XÁC NHẬN BẢO MẬT:\nVui lòng nhập lại MẬT KHẨU (hoặc Mã Bảo Mật) của tài khoản Admin để thực hiện lệnh xóa:");
+        if (currentRole === 'sub_account') { alert("Bạn không có quyền!"); return; }
+        if (!confirm("CẢNH BÁO: Xóa TOÀN BỘ dữ liệu của " + currentSchoolName + "?")) return;
+        const inputPass = prompt("Nhập lại MẬT KHẨU Admin để xác nhận xóa:");
         if (!inputPass) return;
 
         let isAuthorized = false;
-
-        // Xác thực lại mật khẩu
         if (currentRole === 'root') {
             if (inputPass === '123456') isAuthorized = true;
         } else if (currentRole === 'school_admin') {
-            // Lấy pass từ DB để so sánh
             const snapshot = await get(ref(db, 'schools_registry/' + currentSchoolId));
             if (snapshot.exists() && snapshot.val().password === inputPass) isAuthorized = true;
         }
 
         if (isAuthorized) {
             remove(ref(db, getDbPath('schedules')))
-                .then(() => alert("Đã xóa toàn bộ dữ liệu lịch thành công!"))
-                .catch(err => alert("Lỗi khi xóa: " + err));
+                .then(() => alert("Đã xóa toàn bộ dữ liệu!"))
+                .catch(err => alert("Lỗi: " + err));
         } else {
-            alert("Mật khẩu xác nhận KHÔNG ĐÚNG! Hủy bỏ lệnh xóa.");
+            alert("Mật khẩu sai!");
         }
     };
 
@@ -471,7 +536,7 @@
         const code = document.getElementById("accCode").value.trim();
         if(username && code.length === 4) { 
             push(ref(db, getDbPath('subAccounts')), { username, code }); 
-            alert("Đã tạo tài khoản con cho trường hiện tại!"); 
+            alert("Đã tạo tài khoản con!"); 
             document.getElementById("accUsername").value = ''; document.getElementById("accCode").value = '';
         }
     };
@@ -481,7 +546,8 @@
             document.getElementById("accountTableBody").innerHTML = h;
         });
     }
-    window.removeAcc = (key) => confirm("Xóa tài khoản này?") && remove(ref(db, getDbPath(`subAccounts/${key}`)));
+    window.removeAcc = (key) => confirm("Xóa?") && remove(ref(db, getDbPath(`subAccounts/${key}`)));
+    
     window.addSchedule = () => { 
         const data = { date: document.getElementById("inputDate").value, session: document.getElementById("inputSession").value, time: document.getElementById("inputTime").value, content: document.getElementById("inputContent").value, person: document.getElementById("inputPerson").value, creator: currentUser };
         const key = document.getElementById("editKey").value;
@@ -489,13 +555,21 @@
     };
     window.cancelEdit = () => { document.getElementById("editKey").value = ""; document.getElementById("inputContent").value = ""; loadSchedule(); };
     window.editItem = (k,d,s,t,c,p) => { document.getElementById("editKey").value = k; document.getElementById("inputDate").value = d; document.getElementById("inputSession").value = s; document.getElementById("inputTime").value = t; document.getElementById("inputContent").value = c; document.getElementById("inputPerson").value = p; switchTab('manual'); };
-    window.deleteItem = (k) => confirm("Xóa lịch này?") && remove(ref(db, getDbPath('schedules/'+k)));
-    window.saveGeneralTask = () => set(ref(db, getDbPath('generalTask')), document.getElementById("inputGeneralTask").value);
+    window.deleteItem = (k) => confirm("Xóa?") && remove(ref(db, getDbPath('schedules/'+k)));
+    
+    // Cập nhật hàm lưu Công việc chung để lưu thêm cả Số tuần
+    window.saveGeneralTask = () => {
+        const updates = {};
+        updates[getDbPath('generalTask')] = document.getElementById("inputGeneralTask").value;
+        updates[getDbPath('currentWeek')] = document.getElementById("inputWeekNumber").value;
+        update(ref(db), updates).then(() => alert("Đã lưu thông tin chung và số tuần!"));
+    };
+
     window.createNewSchool = () => {
         if (currentRole !== 'root') return;
         const name = document.getElementById("newSchoolName").value.trim();
         const code = document.getElementById("newSchoolCode").value.trim();
-        if (!name || code.length < 4) { alert("Vui lòng nhập tên trường và mã bảo mật (4 số)!"); return; }
+        if (!name || code.length < 4) { alert("Vui lòng nhập đủ thông tin!"); return; }
         const username = removeVietnameseTones(name); 
         get(ref(db, 'schools_registry/'+username)).then(snap => {
             if (snap.exists()) { alert("Trường này đã tồn tại!"); } else {
