@@ -13,7 +13,7 @@
         
         .header-top { display: flex; justify-content: space-between; text-align: center; margin-bottom: 15px; }
         .header-left h4 { margin: 0; font-size: 15px; text-transform: uppercase; font-weight: normal; }
-        .header-left h5 { margin: 0; font-size: 15px; font-weight: bold; text-decoration: underline; margin-top: 5px;}
+        .header-left h5 { margin: 0; font-size: 15px; font-weight: bold; text-decoration: underline; margin-top: 5px; text-transform: uppercase;} 
         .header-right h4 { margin: 0; font-size: 15px; text-transform: uppercase; font-weight: bold; }
         .header-right h5 { margin: 0; font-size: 15px; font-weight: bold; margin-top: 5px; }
 
@@ -133,7 +133,7 @@
                 </div>
                 <p class="small text-muted mt-2 mb-0">
                     * Hệ thống sẽ dùng <b>mốc gần nhất</b> so với ngày bạn đang xem để tính số tuần.<br>
-                    * Ví dụ: Bạn nhập ngày 05/09 là Tuần 1. Thì ngày 12/09 tự động là Tuần 2. Nếu sau Tết bạn nhập ngày 20/01 là Tuần 19, thì các tuần sau đó sẽ đếm tiếp từ 19.
+                    * Ví dụ: Bạn nhập ngày 05/09 là Tuần 1. Thì ngày 12/09 tự động là Tuần 2.
                 </p>
             </div>
             
@@ -229,9 +229,16 @@
             <div class="card card-body mb-3 border-danger">
                 <h6 class="text-danger fw-bold">TẠO TRƯỜNG THÀNH PHẦN MỚI</h6>
                 <div class="row g-2">
-                    <div class="col-md-6"><label class="small fw-bold">Tên hiển thị trường:</label><input type="text" id="newSchoolName" class="form-control" placeholder="Ví dụ: Trường THPT Chu Văn An"></div>
+                    <div class="col-md-6">
+                        <label class="small fw-bold">Tên hiển thị trường:</label>
+                        <input type="text" id="newSchoolName" class="form-control" placeholder="VD: THPT Y JÚT (Hệ thống tự thêm chữ TRƯỜNG)">
+                    </div>
                     <div class="col-md-4"><label class="small fw-bold">Mã bảo mật (Admin):</label><input type="text" id="newSchoolCode" class="form-control" maxlength="4" value="1234"></div>
                     <div class="col-md-2 d-flex align-items-end"><button class="btn btn-danger w-100 fw-bold" onclick="createNewSchool()">TẠO NGAY</button></div>
+                </div>
+                <div class="mt-2 text-muted small">
+                    <i>* Hệ thống sẽ tự động thêm chữ "TRƯỜNG" vào tên hiển thị.<br>
+                    * Tên đăng nhập sẽ được tạo tự động không dấu (Ví dụ: <b>truongthptyjut</b>).</i>
                 </div>
             </div>
             <h6 class="fw-bold mt-4">DANH SÁCH CÁC TRƯỜNG ĐÃ TẠO</h6>
@@ -378,7 +385,7 @@
         loadSchedule();
     };
 
-    // --- LOGIC LỊCH & TÍNH TOÁN TUẦN THÔNG MINH ---
+    // --- LOGIC LỊCH ---
     window.loadSchedule = function(isUserSelected = false) {
         let viewDateStr = document.getElementById("viewDate").value;
         if (!viewDateStr && !isUserSelected) {
@@ -387,54 +394,39 @@
         const filterDate = document.getElementById("filterListDate").value;
         const todayStr = new Date().toISOString().split('T')[0];
         
-        // 1. Lấy danh sách cấu hình tuần (Week Configs)
-        // Cấu trúc data: weekConfigs: { key1: {startDate: '2025-09-05', weekNum: 1, generalTask: '...'}, ... }
+        // Load Week Configs
         onValue(ref(db, getDbPath('weekConfigs')), (snap) => {
             const configs = [];
-            snap.forEach(child => {
-                configs.push(child.val());
-            });
-
-            // Sắp xếp các mốc thời gian tăng dần
+            snap.forEach(child => { configs.push(child.val()); });
             configs.sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
 
-            // Hiển thị danh sách trong Admin
             if(document.getElementById("weekConfigsBody")){
                 let htmlConfig = configs.map(c => `<tr><td>${c.startDate}</td><td>${c.weekNum}</td><td>${c.generalTask}</td><td><button class="btn btn-xs btn-danger" onclick="deleteWeekConfig('${c.startDate}')">Xóa</button></td></tr>`).join("");
                 document.getElementById("weekConfigsBody").innerHTML = htmlConfig;
             }
 
-            // Logic tính toán: Tìm mốc cấu hình GẦN NHẤT nhưng <= ngày đang xem (viewDate)
             const viewDate = new Date(viewDateStr);
             let activeConfig = null;
-
             for (let i = configs.length - 1; i >= 0; i--) {
                 const configDate = new Date(configs[i].startDate);
-                if (configDate <= viewDate) {
-                    activeConfig = configs[i];
-                    break;
-                }
+                if (configDate <= viewDate) { activeConfig = configs[i]; break; }
             }
 
-            // Hiển thị kết quả
             if (activeConfig) {
-                // Tính khoảng cách tuần từ mốc này
                 const configDate = new Date(activeConfig.startDate);
                 const diffTime = viewDate - configDate;
                 const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
                 const weeksPassed = Math.floor(diffDays / 7);
                 const currentWeek = parseInt(activeConfig.weekNum) + weeksPassed;
-
                 document.getElementById("mainTitle").innerText = `LỊCH LÀM VIỆC (TUẦN ${currentWeek})`;
                 document.getElementById("displayGeneralTask").innerText = activeConfig.generalTask || "LỊCH CÔNG TÁC";
             } else {
-                // Nếu không tìm thấy mốc nào (ngày xem nhỏ hơn mốc đầu tiên)
                 document.getElementById("mainTitle").innerText = "LỊCH LÀM VIỆC";
                 document.getElementById("displayGeneralTask").innerText = "Chưa có thông tin chung";
             }
         });
 
-        // 2. Load lịch chi tiết
+        // Load Schedules
         onValue(ref(db, getDbPath('schedules')), (snapshot) => {
             const allData = [];
             snapshot.forEach(child => { let v = child.val(); v.key = child.key; allData.push(v); });
@@ -479,53 +471,20 @@
         document.querySelectorAll('#adminTabs .nav-link').forEach(l => l.classList.toggle('active', l.innerText.toLowerCase().includes(n === 'schools' ? 'quản lý trường' : (n === 'excel' ? 'excel' : (n === 'list' ? 'dữ liệu' : (n === 'accounts' ? 'tài khoản' : (n === 'general' ? 'chung' : 'nhập lịch')))))));
     };
     
-    // --- LƯU CẤU HÌNH TUẦN MỚI ---
     window.saveWeekConfig = () => {
         const startDate = document.getElementById("inputWeekStartDate").value;
         const weekNum = document.getElementById("inputWeekNum").value;
         const generalTask = document.getElementById("inputGeneralTask").value;
-
-        if (!startDate || !weekNum) {
-            alert("Vui lòng nhập Ngày bắt đầu và Số tuần!");
-            return;
-        }
-
-        // Dùng ngày làm Key để tránh trùng lặp
-        const configKey = startDate.replace(/-/g, ""); // 2025-09-05 -> 20250905
-        const data = {
-            startDate: startDate,
-            weekNum: parseInt(weekNum),
-            generalTask: generalTask
-        };
-
-        update(ref(db, getDbPath(`weekConfigs/${configKey}`)), data)
-            .then(() => {
-                alert("Đã lưu mốc thời gian mới thành công!");
-                document.getElementById("inputWeekStartDate").value = "";
-                document.getElementById("inputWeekNum").value = "";
-                document.getElementById("inputGeneralTask").value = "";
-            })
-            .catch(error => alert("Lỗi: " + error));
+        if (!startDate || !weekNum) { alert("Vui lòng nhập Ngày bắt đầu và Số tuần!"); return; }
+        const configKey = startDate.replace(/-/g, ""); 
+        update(ref(db, getDbPath(`weekConfigs/${configKey}`)), { startDate, weekNum: parseInt(weekNum), generalTask })
+            .then(() => { alert("Đã lưu mốc thời gian!"); document.getElementById("inputWeekStartDate").value=""; document.getElementById("inputWeekNum").value=""; document.getElementById("inputGeneralTask").value=""; });
     };
 
     window.deleteWeekConfig = (startDate) => {
-        if(!confirm("Xóa mốc cấu hình này?")) return;
-        const configKey = startDate.replace(/-/g, "");
-        remove(ref(db, getDbPath(`weekConfigs/${configKey}`)));
+        if(!confirm("Xóa mốc này?")) return;
+        remove(ref(db, getDbPath(`weekConfigs/${startDate.replace(/-/g, "")}`)));
     };
-
-    // --- IMPORT & EXPORT EXCEL ---
-    function excelDateToJSDate(serial) {
-        if (typeof serial === 'number') {
-            const utc_days  = Math.floor(serial - 25569); const utc_value = utc_days * 86400;                                      
-            const date_info = new Date(utc_value * 1000); return date_info.toISOString().split('T')[0];
-        }
-        if (typeof serial === 'string') {
-            const parts = serial.split('/');
-            if (parts.length === 3) return `${parts[2]}-${parts[1]}-${parts[0]}`; return serial;
-        }
-        return '';
-    }
 
     window.processExcelImport = () => {
         const fileInput = document.getElementById('excelFile');
@@ -546,69 +505,50 @@
                 const content = row['Nội dung'] || row['noi dung'] || row['content'];
                 const person = row['Người thực hiện'] || row['nguoi thuc hien'] || '';
                 if (rawDate && content) {
-                    const finalDate = excelDateToJSDate(rawDate);
-                    push(ref(db, targetPath), { date: finalDate, session, time, content, person, creator: currentUser + " (Excel)" });
+                    push(ref(db, targetPath), { date: excelDateToJSDate(rawDate), session, time, content, person, creator: currentUser + " (Excel)" });
                     count++;
                 }
             });
-            alert(`Đã nhập thành công ${count} lịch công tác vào: ${currentSchoolName}`);
-            fileInput.value = ''; loadSchedule();
+            alert(`Đã nhập ${count} lịch!`); fileInput.value = ''; loadSchedule();
         };
         reader.readAsArrayBuffer(file);
     };
+    
+    function excelDateToJSDate(serial) {
+        if (typeof serial === 'number') {
+            const date_info = new Date((Math.floor(serial - 25569) * 86400) * 1000); return date_info.toISOString().split('T')[0];
+        } else if (typeof serial === 'string') {
+             const parts = serial.split('/'); if (parts.length === 3) return `${parts[2]}-${parts[1]}-${parts[0]}`; return serial;
+        } return '';
+    }
 
     window.exportToExcel = () => {
-        if (!confirm("Tải xuống toàn bộ lịch công tác của trường " + currentSchoolName + "?")) return;
+        if (!confirm("Tải dữ liệu?")) return;
         get(ref(db, getDbPath('schedules'))).then((snapshot) => {
-            if (!snapshot.exists()) { alert("Chưa có dữ liệu để xuất!"); return; }
+            if (!snapshot.exists()) { alert("Chưa có dữ liệu!"); return; }
             const exportData = [];
-            snapshot.forEach(child => {
-                const v = child.val();
-                exportData.push({ "Ngày": v.date, "Buổi": v.session, "Giờ": v.time, "Nội dung": v.content, "Người thực hiện": v.person });
-            });
+            snapshot.forEach(child => { const v = child.val(); exportData.push({ "Ngày": v.date, "Buổi": v.session, "Giờ": v.time, "Nội dung": v.content, "Người thực hiện": v.person }); });
             exportData.sort((a, b) => new Date(a['Ngày']) - new Date(b['Ngày']));
-            const worksheet = XLSX.utils.json_to_sheet(exportData);
             const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "LichCongTac");
-            const dateStr = new Date().toISOString().split('T')[0];
-            const safeName = removeVietnameseTones(currentSchoolName).replace(/\s/g, '_');
-            XLSX.writeFile(workbook, `LichCongTac_${safeName}_${dateStr}.xlsx`);
+            XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(exportData), "LichCongTac");
+            XLSX.writeFile(workbook, `Lich_${removeVietnameseTones(currentSchoolName)}.xlsx`);
         });
     };
 
-    // --- HÀM XÓA TOÀN BỘ DỮ LIỆU ---
     window.deleteAllSchedule = async () => {
-        if (currentRole === 'sub_account') { alert("Bạn không có quyền!"); return; }
-        if (!confirm("CẢNH BÁO: Xóa TOÀN BỘ dữ liệu của " + currentSchoolName + "?")) return;
-        const inputPass = prompt("Nhập lại MẬT KHẨU Admin để xác nhận xóa:");
+        if (currentRole === 'sub_account') { alert("Không đủ quyền!"); return; }
+        if (!confirm("CẢNH BÁO: Xóa TOÀN BỘ dữ liệu?")) return;
+        const inputPass = prompt("Nhập lại MẬT KHẨU Admin:");
         if (!inputPass) return;
-
-        let isAuthorized = false;
-        if (currentRole === 'root') {
-            if (inputPass === '123456') isAuthorized = true;
-        } else if (currentRole === 'school_admin') {
-            const snapshot = await get(ref(db, 'schools_registry/' + currentSchoolId));
-            if (snapshot.exists() && snapshot.val().password === inputPass) isAuthorized = true;
-        }
-
-        if (isAuthorized) {
-            remove(ref(db, getDbPath('schedules')))
-                .then(() => alert("Đã xóa toàn bộ dữ liệu!"))
-                .catch(err => alert("Lỗi: " + err));
-        } else {
-            alert("Mật khẩu sai!");
-        }
+        let isAuth = false;
+        if (currentRole === 'root') { if (inputPass === '123456') isAuth = true; } 
+        else if (currentRole === 'school_admin') { const s = await get(ref(db, 'schools_registry/' + currentSchoolId)); if (s.exists() && s.val().password === inputPass) isAuth = true; }
+        if (isAuth) remove(ref(db, getDbPath('schedules'))).then(() => alert("Đã xóa!")).catch(e => alert("Lỗi: "+e)); else alert("Sai mật khẩu!");
     };
 
-    // --- CÁC HÀM CŨ ---
     window.createSubAccount = () => {
-        const username = document.getElementById("accUsername").value.trim();
-        const code = document.getElementById("accCode").value.trim();
-        if(username && code.length === 4) { 
-            push(ref(db, getDbPath('subAccounts')), { username, code }); 
-            alert("Đã tạo tài khoản con!"); 
-            document.getElementById("accUsername").value = ''; document.getElementById("accCode").value = '';
-        }
+        const username = document.getElementById("accUsername").value.trim(); const code = document.getElementById("accCode").value.trim();
+        if(username && code.length === 4) { push(ref(db, getDbPath('subAccounts')), { username, code }); alert("Đã tạo!"); document.getElementById("accUsername").value = ''; document.getElementById("accCode").value = ''; }
     };
     function loadSubAccounts() {
         onValue(ref(db, getDbPath('subAccounts')), (snap) => {
@@ -617,30 +557,46 @@
         });
     }
     window.removeAcc = (key) => confirm("Xóa?") && remove(ref(db, getDbPath(`subAccounts/${key}`)));
-    
-    window.addSchedule = () => { 
-        const data = { date: document.getElementById("inputDate").value, session: document.getElementById("inputSession").value, time: document.getElementById("inputTime").value, content: document.getElementById("inputContent").value, person: document.getElementById("inputPerson").value, creator: currentUser };
-        const key = document.getElementById("editKey").value;
-        if(key) update(ref(db, getDbPath('schedules/'+key)), data).then(cancelEdit); else push(ref(db, getDbPath('schedules')), data).then(cancelEdit);
-    };
+    window.addSchedule = () => { const d = { date: document.getElementById("inputDate").value, session: document.getElementById("inputSession").value, time: document.getElementById("inputTime").value, content: document.getElementById("inputContent").value, person: document.getElementById("inputPerson").value, creator: currentUser }; const k = document.getElementById("editKey").value; if(k) update(ref(db, getDbPath('schedules/'+k)), d).then(cancelEdit); else push(ref(db, getDbPath('schedules')), d).then(cancelEdit); };
     window.cancelEdit = () => { document.getElementById("editKey").value = ""; document.getElementById("inputContent").value = ""; loadSchedule(); };
     window.editItem = (k,d,s,t,c,p) => { document.getElementById("editKey").value = k; document.getElementById("inputDate").value = d; document.getElementById("inputSession").value = s; document.getElementById("inputTime").value = t; document.getElementById("inputContent").value = c; document.getElementById("inputPerson").value = p; switchTab('manual'); };
     window.deleteItem = (k) => confirm("Xóa?") && remove(ref(db, getDbPath('schedules/'+k)));
     
+    // --- CHỨC NĂNG TẠO TRƯỜNG (CẬP NHẬT: TỰ ĐỘNG THÊM "TRƯỜNG") ---
     window.createNewSchool = () => {
         if (currentRole !== 'root') return;
-        const name = document.getElementById("newSchoolName").value.trim();
+        let name = document.getElementById("newSchoolName").value.trim();
         const code = document.getElementById("newSchoolCode").value.trim();
-        if (!name || code.length < 4) { alert("Vui lòng nhập đủ thông tin!"); return; }
+        
+        if (!name || code.length < 4) { alert("Vui lòng nhập tên trường và mã bảo mật (4 số)!"); return; }
+
+        // Tự động thêm chữ "TRƯỜNG" nếu người dùng quên, và viết hoa toàn bộ
+        if (!name.toUpperCase().startsWith("TRƯỜNG")) {
+            name = "TRƯỜNG " + name;
+        }
+        name = name.toUpperCase(); // Đảm bảo viết hoa toàn bộ
+
+        // Tạo username không dấu từ tên đầy đủ (bao gồm cả chữ TRƯỜNG) để đảm bảo duy nhất
         const username = removeVietnameseTones(name); 
+
         get(ref(db, 'schools_registry/'+username)).then(snap => {
-            if (snap.exists()) { alert("Trường này đã tồn tại!"); } else {
-                set(ref(db, 'schools_registry/' + username), { name: name, username: username, password: code, createdAt: new Date().toISOString() }).then(() => {
-                    alert(`Đã tạo thành công!\nTrường: ${name}\nUser Admin: ${username}\nPass: ${code}`); document.getElementById("newSchoolName").value = '';
+            if (snap.exists()) {
+                alert("Trường này đã tồn tại (hoặc mã tên trùng)!");
+            } else {
+                const newSchoolData = {
+                    name: name, // Lưu tên đầy đủ có dấu: "TRƯỜNG THPT..."
+                    username: username, // Lưu user không dấu: "truongthpt..."
+                    password: code,
+                    createdAt: new Date().toISOString()
+                };
+                set(ref(db, 'schools_registry/' + username), newSchoolData).then(() => {
+                    alert(`Đã tạo thành công!\nTrường: ${name}\nUser Admin: ${username}\nPass: ${code}`);
+                    document.getElementById("newSchoolName").value = '';
                 });
             }
         });
     };
+
     function loadSchoolsList() {
         onValue(ref(db, 'schools_registry'), (snap) => {
             let html = ""; snap.forEach(c => { const s = c.val(); html += `<tr><td>${s.name}</td><td class="fw-bold text-primary">${s.username}</td><td>${s.password}</td><td>${s.createdAt ? s.createdAt.split('T')[0] : ''}</td></tr>`; });
@@ -649,7 +605,6 @@
     }
 
     loadSchedule();
-    // Expose deleteWeekConfig to window
     window.deleteWeekConfig = window.deleteWeekConfig;
     const originalSwitchTab = window.switchTab;
     window.switchTab = function(n) { originalSwitchTab(n); if (n === 'accounts') loadSubAccounts(); }
