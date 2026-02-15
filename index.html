@@ -132,8 +132,7 @@
                     </div>
                 </div>
                 <p class="small text-muted mt-2 mb-0">
-                    * Hệ thống sẽ dùng <b>mốc gần nhất</b> so với ngày bạn đang xem để tính số tuần.<br>
-                    * Ví dụ: Bạn nhập ngày 05/09 là Tuần 1. Thì ngày 12/09 tự động là Tuần 2.
+                    * Hệ thống sẽ dùng <b>mốc gần nhất</b> so với ngày bạn đang xem để tính số tuần.
                 </p>
             </div>
             
@@ -227,25 +226,41 @@
 
         <div id="tabSchools" style="display: none;">
             <div class="card card-body mb-3 border-danger">
-                <h6 class="text-danger fw-bold">TẠO TRƯỜNG THÀNH PHẦN MỚI</h6>
+                <h6 class="text-danger fw-bold" id="schoolFormTitle">TẠO TRƯỜNG THÀNH PHẦN MỚI</h6>
                 <div class="row g-2">
+                    <input type="hidden" id="editingSchoolKey">
                     <div class="col-md-6">
                         <label class="small fw-bold">Tên hiển thị trường:</label>
-                        <input type="text" id="newSchoolName" class="form-control" placeholder="VD: THPT Y JÚT (Hệ thống tự thêm chữ TRƯỜNG)">
+                        <input type="text" id="newSchoolName" class="form-control" placeholder="VD: THPT Y JÚT">
                     </div>
-                    <div class="col-md-4"><label class="small fw-bold">Mã bảo mật (Admin):</label><input type="text" id="newSchoolCode" class="form-control" maxlength="4" value="1234"></div>
-                    <div class="col-md-2 d-flex align-items-end"><button class="btn btn-danger w-100 fw-bold" onclick="createNewSchool()">TẠO NGAY</button></div>
+                    <div class="col-md-4">
+                        <label class="small fw-bold">Mã bảo mật (Admin):</label>
+                        <input type="text" id="newSchoolCode" class="form-control" maxlength="4" value="1234">
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end gap-1">
+                        <button class="btn btn-danger w-100 fw-bold" id="btnSaveSchool" onclick="saveSchoolInfo()">LƯU</button>
+                        <button class="btn btn-secondary w-100 fw-bold" id="btnCancelSchoolEdit" onclick="cancelSchoolEdit()" style="display:none">HỦY</button>
+                    </div>
                 </div>
-                <div class="mt-2 text-muted small">
-                    <i>* Hệ thống sẽ tự động thêm chữ "TRƯỜNG" vào tên hiển thị.<br>
-                    * Tên đăng nhập sẽ được tạo tự động không dấu (Ví dụ: <b>truongthptyjut</b>).</i>
+                <div class="mt-2 text-muted small" id="schoolHelpText">
+                    <i>* Hệ thống tự thêm "TRƯỜNG". User admin tự động: <b>[tên viết liền không dấu]</b>.</i>
                 </div>
             </div>
             <h6 class="fw-bold mt-4">DANH SÁCH CÁC TRƯỜNG ĐÃ TẠO</h6>
-            <table class="table table-bordered table-striped">
-                <thead class="table-dark"><tr><th>Tên Trường</th><th>User Admin</th><th>Pass Admin</th><th>Ngày tạo</th></tr></thead>
-                <tbody id="schoolsListBody"></tbody>
-            </table>
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Tên Trường</th>
+                            <th>User Admin</th>
+                            <th>Pass Admin</th>
+                            <th>Ngày tạo</th>
+                            <th style="width: 140px;">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="schoolsListBody"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -309,7 +324,6 @@
         const dbRef = ref(db);
         get(dbRef).then((snapshot) => {
             let found = false;
-            // Root Subs
             const rootSubs = snapshot.child('subAccounts').val();
             if (rootSubs) {
                 for (const [key, val] of Object.entries(rootSubs)) {
@@ -319,7 +333,6 @@
                 }
             }
             if (found) return;
-            // School Admins
             const schools = snapshot.child('schools_registry').val();
             if (schools) {
                 for (const [key, val] of Object.entries(schools)) {
@@ -329,7 +342,6 @@
                 }
             }
             if (found) return;
-            // School Subs
             const schoolsData = snapshot.child('schools_data').val();
             if (schoolsData) {
                 for (const [schId, schData] of Object.entries(schoolsData)) {
@@ -394,7 +406,6 @@
         const filterDate = document.getElementById("filterListDate").value;
         const todayStr = new Date().toISOString().split('T')[0];
         
-        // Load Week Configs
         onValue(ref(db, getDbPath('weekConfigs')), (snap) => {
             const configs = [];
             snap.forEach(child => { configs.push(child.val()); });
@@ -426,7 +437,6 @@
             }
         });
 
-        // Load Schedules
         onValue(ref(db, getDbPath('schedules')), (snapshot) => {
             const allData = [];
             snapshot.forEach(child => { let v = child.val(); v.key = child.key; allData.push(v); });
@@ -562,50 +572,114 @@
     window.editItem = (k,d,s,t,c,p) => { document.getElementById("editKey").value = k; document.getElementById("inputDate").value = d; document.getElementById("inputSession").value = s; document.getElementById("inputTime").value = t; document.getElementById("inputContent").value = c; document.getElementById("inputPerson").value = p; switchTab('manual'); };
     window.deleteItem = (k) => confirm("Xóa?") && remove(ref(db, getDbPath('schedules/'+k)));
     
-    // --- CHỨC NĂNG TẠO TRƯỜNG (CẬP NHẬT: TỰ ĐỘNG THÊM "TRƯỜNG") ---
-    window.createNewSchool = () => {
+    // --- QUẢN LÝ TRƯỜNG (CẬP NHẬT: SỬA/XÓA) ---
+    window.saveSchoolInfo = () => {
         if (currentRole !== 'root') return;
+        const editingKey = document.getElementById("editingSchoolKey").value;
         let name = document.getElementById("newSchoolName").value.trim();
         const code = document.getElementById("newSchoolCode").value.trim();
-        
+
         if (!name || code.length < 4) { alert("Vui lòng nhập tên trường và mã bảo mật (4 số)!"); return; }
+        if (!name.toUpperCase().startsWith("TRƯỜNG")) { name = "TRƯỜNG " + name; }
+        name = name.toUpperCase();
 
-        // Tự động thêm chữ "TRƯỜNG" nếu người dùng quên, và viết hoa toàn bộ
-        if (!name.toUpperCase().startsWith("TRƯỜNG")) {
-            name = "TRƯỜNG " + name;
+        if (editingKey) {
+            // Chế độ Sửa (Giữ nguyên username, chỉ đổi tên và pass)
+            update(ref(db, 'schools_registry/' + editingKey), { name: name, password: code })
+            .then(() => {
+                alert("Đã cập nhật thông tin trường!");
+                cancelSchoolEdit();
+            });
+        } else {
+            // Chế độ Tạo Mới
+            const username = removeVietnameseTones(name); 
+            get(ref(db, 'schools_registry/'+username)).then(snap => {
+                if (snap.exists()) {
+                    alert("Trường này đã tồn tại!");
+                } else {
+                    const newSchoolData = { name: name, username: username, password: code, createdAt: new Date().toISOString() };
+                    set(ref(db, 'schools_registry/' + username), newSchoolData).then(() => {
+                        alert(`Đã tạo!\nUser: ${username}\nPass: ${code}`);
+                        cancelSchoolEdit();
+                    });
+                }
+            });
         }
-        name = name.toUpperCase(); // Đảm bảo viết hoa toàn bộ
+    };
 
-        // Tạo username không dấu từ tên đầy đủ (bao gồm cả chữ TRƯỜNG) để đảm bảo duy nhất
-        const username = removeVietnameseTones(name); 
+    window.startEditSchool = (username, name, password) => {
+        document.getElementById("editingSchoolKey").value = username;
+        document.getElementById("newSchoolName").value = name;
+        document.getElementById("newSchoolCode").value = password;
+        
+        document.getElementById("schoolFormTitle").innerText = "CẬP NHẬT THÔNG TIN TRƯỜNG";
+        document.getElementById("schoolFormTitle").classList.remove("text-danger");
+        document.getElementById("schoolFormTitle").classList.add("text-warning");
+        
+        document.getElementById("btnSaveSchool").innerText = "CẬP NHẬT";
+        document.getElementById("btnSaveSchool").classList.remove("btn-danger");
+        document.getElementById("btnSaveSchool").classList.add("btn-warning");
+        
+        document.getElementById("btnCancelSchoolEdit").style.display = "block";
+        document.getElementById("schoolHelpText").style.display = "none";
+    };
 
-        get(ref(db, 'schools_registry/'+username)).then(snap => {
-            if (snap.exists()) {
-                alert("Trường này đã tồn tại (hoặc mã tên trùng)!");
-            } else {
-                const newSchoolData = {
-                    name: name, // Lưu tên đầy đủ có dấu: "TRƯỜNG THPT..."
-                    username: username, // Lưu user không dấu: "truongthpt..."
-                    password: code,
-                    createdAt: new Date().toISOString()
-                };
-                set(ref(db, 'schools_registry/' + username), newSchoolData).then(() => {
-                    alert(`Đã tạo thành công!\nTrường: ${name}\nUser Admin: ${username}\nPass: ${code}`);
-                    document.getElementById("newSchoolName").value = '';
-                });
-            }
-        });
+    window.cancelSchoolEdit = () => {
+        document.getElementById("editingSchoolKey").value = "";
+        document.getElementById("newSchoolName").value = "";
+        document.getElementById("newSchoolCode").value = "1234";
+
+        document.getElementById("schoolFormTitle").innerText = "TẠO TRƯỜNG THÀNH PHẦN MỚI";
+        document.getElementById("schoolFormTitle").classList.add("text-danger");
+        document.getElementById("schoolFormTitle").classList.remove("text-warning");
+
+        document.getElementById("btnSaveSchool").innerText = "TẠO NGAY";
+        document.getElementById("btnSaveSchool").classList.add("btn-danger");
+        document.getElementById("btnSaveSchool").classList.remove("btn-warning");
+
+        document.getElementById("btnCancelSchoolEdit").style.display = "none";
+        document.getElementById("schoolHelpText").style.display = "block";
+    };
+
+    window.deleteSchool = (username) => {
+        if (!confirm("CẢNH BÁO NGUY HIỂM:\n\nXóa trường sẽ xóa VĨNH VIỄN toàn bộ LỊCH và TÀI KHOẢN của trường đó.\n\nBạn có chắc chắn muốn xóa không?")) return;
+        
+        const inputPass = prompt("Nhập mật khẩu ROOT ADMIN (123456) để xác nhận xóa:");
+        if (inputPass !== '123456') { alert("Sai mật khẩu xác nhận!"); return; }
+
+        // Xóa thông tin đăng ký
+        remove(ref(db, 'schools_registry/' + username));
+        // Xóa dữ liệu lịch và tài khoản con
+        remove(ref(db, 'schools_data/' + username));
+        alert("Đã xóa hoàn toàn trường khỏi hệ thống!");
     };
 
     function loadSchoolsList() {
         onValue(ref(db, 'schools_registry'), (snap) => {
-            let html = ""; snap.forEach(c => { const s = c.val(); html += `<tr><td>${s.name}</td><td class="fw-bold text-primary">${s.username}</td><td>${s.password}</td><td>${s.createdAt ? s.createdAt.split('T')[0] : ''}</td></tr>`; });
+            let html = ""; 
+            snap.forEach(c => { 
+                const s = c.val(); 
+                html += `<tr>
+                    <td>${s.name}</td>
+                    <td class="fw-bold text-primary">${s.username}</td>
+                    <td>${s.password}</td>
+                    <td>${s.createdAt ? s.createdAt.split('T')[0] : ''}</td>
+                    <td>
+                        <button class="btn btn-sm btn-warning me-1" onclick="startEditSchool('${s.username}', '${s.name}', '${s.password}')">Sửa</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteSchool('${s.username}')">Xóa</button>
+                    </td>
+                </tr>`; 
+            });
             document.getElementById("schoolsListBody").innerHTML = html;
         });
     }
 
     loadSchedule();
     window.deleteWeekConfig = window.deleteWeekConfig;
+    window.startEditSchool = window.startEditSchool;
+    window.cancelSchoolEdit = window.cancelSchoolEdit;
+    window.deleteSchool = window.deleteSchool;
+    
     const originalSwitchTab = window.switchTab;
     window.switchTab = function(n) { originalSwitchTab(n); if (n === 'accounts') loadSubAccounts(); }
 </script>
