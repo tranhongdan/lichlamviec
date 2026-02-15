@@ -144,16 +144,21 @@
                     <input type="file" id="excelFile" class="form-control" accept=".xlsx, .xls">
                     <button class="btn btn-success fw-bold" onclick="processExcelImport()"><i class="fas fa-upload"></i> TẢI LÊN & NHẬP LIỆU</button>
                 </div>
-                <small class="text-muted">Định dạng ngày hỗ trợ: 15/02/2026 hoặc định dạng Date của Excel.</small>
             </div>
         </div>
 
         <div id="tabList" style="display: none;">
-            <div class="alert alert-light border mb-3 d-flex align-items-center gap-3">
-                <label class="fw-bold mb-0">Lọc theo ngày:</label>
-                <input type="date" id="filterListDate" class="form-control w-auto" onchange="loadSchedule()">
-                <button class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('filterListDate').value=''; loadSchedule();">Xem tất cả</button>
+            <div class="d-flex justify-content-between align-items-center mb-3 p-2 bg-light border rounded">
+                <div class="d-flex align-items-center gap-2">
+                    <label class="fw-bold mb-0">Lọc ngày:</label>
+                    <input type="date" id="filterListDate" class="form-control w-auto" onchange="loadSchedule()">
+                    <button class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('filterListDate').value=''; loadSchedule();">Tất cả</button>
+                </div>
+                <button class="btn btn-danger fw-bold shadow-sm" onclick="deleteAllSchedule()">
+                    <i class="fas fa-trash-alt"></i> XÓA TOÀN BỘ
+                </button>
             </div>
+            
             <div class="table-responsive" style="max-height: 450px;">
                 <table class="table table-sm table-bordered">
                     <thead class="table-dark"><tr><th>Ngày</th><th>Buổi</th><th>Giờ</th><th>Nội dung</th><th>Người</th><th>Thao tác</th></tr></thead>
@@ -181,30 +186,14 @@
             <div class="card card-body mb-3 border-danger">
                 <h6 class="text-danger fw-bold">TẠO TRƯỜNG THÀNH PHẦN MỚI</h6>
                 <div class="row g-2">
-                    <div class="col-md-6">
-                        <label class="small fw-bold">Tên hiển thị trường:</label>
-                        <input type="text" id="newSchoolName" class="form-control" placeholder="Ví dụ: Trường THPT Chu Văn An">
-                    </div>
-                    <div class="col-md-4">
-                        <label class="small fw-bold">Mã bảo mật (Admin):</label>
-                        <input type="text" id="newSchoolCode" class="form-control" maxlength="4" value="1234">
-                    </div>
-                    <div class="col-md-2 d-flex align-items-end">
-                        <button class="btn btn-danger w-100 fw-bold" onclick="createNewSchool()">TẠO NGAY</button>
-                    </div>
+                    <div class="col-md-6"><label class="small fw-bold">Tên hiển thị trường:</label><input type="text" id="newSchoolName" class="form-control" placeholder="Ví dụ: Trường THPT Chu Văn An"></div>
+                    <div class="col-md-4"><label class="small fw-bold">Mã bảo mật (Admin):</label><input type="text" id="newSchoolCode" class="form-control" maxlength="4" value="1234"></div>
+                    <div class="col-md-2 d-flex align-items-end"><button class="btn btn-danger w-100 fw-bold" onclick="createNewSchool()">TẠO NGAY</button></div>
                 </div>
             </div>
-
             <h6 class="fw-bold mt-4">DANH SÁCH CÁC TRƯỜNG ĐÃ TẠO</h6>
             <table class="table table-bordered table-striped">
-                <thead class="table-dark">
-                    <tr>
-                        <th>Tên Trường</th>
-                        <th>User Admin</th>
-                        <th>Pass Admin</th>
-                        <th>Ngày tạo</th>
-                    </tr>
-                </thead>
+                <thead class="table-dark"><tr><th>Tên Trường</th><th>User Admin</th><th>Pass Admin</th><th>Ngày tạo</th></tr></thead>
                 <tbody id="schoolsListBody"></tbody>
             </table>
         </div>
@@ -234,84 +223,63 @@
     const db = getDatabase(app);
 
     // --- TRẠNG THÁI HỆ THỐNG ---
-    let currentUser = null; 
-    let currentRole = null; 
-    let currentSchoolId = 'root'; 
-    let currentSchoolName = 'TRƯỜNG THPT SỐ 1 TRẦN PHÚ'; 
+    let currentUser = null; let currentRole = null; 
+    let currentSchoolId = 'root'; let currentSchoolName = 'TRƯỜNG THPT SỐ 1 TRẦN PHÚ'; 
 
     function removeVietnameseTones(str) {
-        str = str.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g,"a"); 
-        str = str.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g,"e"); 
-        str = str.replace(/ì|í|ị|ỉ|ĩ/g,"i"); 
-        str = str.replace(/ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ/g,"o"); 
-        str = str.replace(/ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ/g,"u"); 
-        str = str.replace(/ỳ|ý|ỵ|ỷ|ỹ/g,"y"); 
-        str = str.replace(/đ/g,"d");
-        str = str.replace(/À|Á|Ạ|Ả|Ã|Â|Ầ|Ấ|Ậ|Ẩ|Ẫ|Ă|Ằ|Ắ|Ặ|Ẳ|Ẵ/g, "A");
-        str = str.replace(/È|É|Ẹ|Ẻ|Ẽ|Ê|Ề|Ế|Ệ|Ể|Ễ/g, "E");
-        str = str.replace(/Ì|Í|Ị|Ỉ|Ĩ/g, "I");
-        str = str.replace(/Ò|Ó|Ọ|Ỏ|Õ|Ô|Ồ|Ố|Ộ|Ổ|Ỗ|Ơ|Ờ|Ớ|Ợ|Ở|Ỡ/g, "O");
-        str = str.replace(/Ù|Ú|Ụ|Ủ|Ũ|Ư|Ừ|Ứ|Ự|Ử|Ữ/g, "U");
-        str = str.replace(/Ỳ|Ý|Ỵ|Ỷ|Ỹ/g, "Y");
-        str = str.replace(/Đ/g, "D");
+        str = str.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g,"a"); str = str.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g,"e"); 
+        str = str.replace(/ì|í|ị|ỉ|ĩ/g,"i"); str = str.replace(/ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ/g,"o"); 
+        str = str.replace(/ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ/g,"u"); str = str.replace(/ỳ|ý|ỵ|ỷ|ỹ/g,"y"); str = str.replace(/đ/g,"d");
+        str = str.replace(/À|Á|Ạ|Ả|Ã|Â|Ầ|Ấ|Ậ|Ẩ|Ẫ|Ă|Ằ|Ắ|Ặ|Ẳ|Ẵ/g, "A"); str = str.replace(/È|É|Ẹ|Ẻ|Ẽ|Ê|Ề|Ế|Ệ|Ể|Ễ/g, "E");
+        str = str.replace(/Ì|Í|Ị|Ỉ|Ĩ/g, "I"); str = str.replace(/Ò|Ó|Ọ|Ỏ|Õ|Ô|Ồ|Ố|Ộ|Ổ|Ỗ|Ơ|Ờ|Ớ|Ợ|Ở|Ỡ/g, "O");
+        str = str.replace(/Ù|Ú|Ụ|Ủ|Ũ|Ư|Ừ|Ứ|Ự|Ử|Ữ/g, "U"); str = str.replace(/Ỳ|Ý|Ỵ|Ỷ|Ỹ/g, "Y"); str = str.replace(/Đ/g, "D");
         return str.toLowerCase().replace(/\s+/g, '');
     }
 
     function getMondayOfCurrentWeek() {
-        const d = new Date();
-        const day = d.getDay();
+        const d = new Date(); const day = d.getDay();
         const diff = d.getDate() - day + (day === 0 ? -6 : 1);
         const monday = new Date(d.setDate(diff));
         return monday.toISOString().split('T')[0];
     }
 
-    // --- ĐỊNH TUYẾN DỮ LIỆU ---
     function getDbPath(endpoint) {
-        if (currentSchoolId === 'root') {
-            return endpoint;
-        } else {
-            return `schools_data/${currentSchoolId}/${endpoint}`; 
-        }
+        return (currentSchoolId === 'root') ? endpoint : `schools_data/${currentSchoolId}/${endpoint}`;
     }
 
-    // --- QUẢN LÝ ĐĂNG NHẬP ---
+    // --- LOGIN ---
     window.toggleAdmin = function() {
         const inputLogin = prompt("Nhập thông tin đăng nhập:\n- Admin Gốc: 123456\n- Admin Trường: [TênViếtLiền][MãBảoMật]\n- Tài khoản con: [Tên][Mã]");
         if (!inputLogin) return;
 
         if (inputLogin === "123456") {
-            setSession('root', 'root', 'ROOT ADMIN', 'TRƯỜNG THPT SỐ 1 TRẦN PHÚ');
-            return;
+            setSession('root', 'root', 'ROOT ADMIN', 'TRƯỜNG THPT SỐ 1 TRẦN PHÚ'); return;
         }
 
         const dbRef = ref(db);
         get(dbRef).then((snapshot) => {
             let found = false;
-            // Check Root Sub-accounts
+            // Root Subs
             const rootSubs = snapshot.child('subAccounts').val();
             if (rootSubs) {
                 for (const [key, val] of Object.entries(rootSubs)) {
                     if (val.username + val.code === inputLogin) {
-                        setSession('root', 'sub_account', val.username, 'TRƯỜNG THPT SỐ 1 TRẦN PHÚ');
-                        found = true; break;
+                        setSession('root', 'sub_account', val.username, 'TRƯỜNG THPT SỐ 1 TRẦN PHÚ'); found = true; break;
                     }
                 }
             }
             if (found) return;
-
-            // Check School Registries
+            // School Admins
             const schools = snapshot.child('schools_registry').val();
             if (schools) {
                 for (const [key, val] of Object.entries(schools)) {
                     if (val.username + val.password === inputLogin) {
-                        setSession(key, 'school_admin', 'ADMIN TRƯỜNG', val.name);
-                        found = true; break;
+                        setSession(key, 'school_admin', 'ADMIN TRƯỜNG', val.name); found = true; break;
                     }
                 }
             }
             if (found) return;
-
-            // Check School Sub-accounts
+            // School Subs
             const schoolsData = snapshot.child('schools_data').val();
             if (schoolsData) {
                 for (const [schId, schData] of Object.entries(schoolsData)) {
@@ -319,43 +287,33 @@
                         for (const [subKey, subVal] of Object.entries(schData.subAccounts)) {
                             if (subVal.username + subVal.code === inputLogin) {
                                 const schoolName = schools[schId] ? schools[schId].name : "Trường Thành Phần";
-                                setSession(schId, 'sub_account', subVal.username, schoolName);
-                                found = true; break;
+                                setSession(schId, 'sub_account', subVal.username, schoolName); found = true; break;
                             }
                         }
                     }
                     if (found) break;
                 }
             }
-
             if (!found) alert("Thông tin đăng nhập không chính xác!");
         });
     };
 
     function setSession(schoolId, role, username, schoolName) {
-        currentUser = username;
-        currentRole = role;
-        currentSchoolId = schoolId;
-        currentSchoolName = schoolName;
-        
+        currentUser = username; currentRole = role; currentSchoolId = schoolId; currentSchoolName = schoolName;
         document.getElementById("headerSchoolName").innerText = schoolName;
-        document.getElementById("excelTargetSchool").innerText = schoolName; // Cập nhật tên trường trong tab Excel
-
+        document.getElementById("excelTargetSchool").innerText = schoolName;
         if (schoolId !== 'root') {
             document.getElementById("subSchoolName").innerText = schoolName;
             document.getElementById("subSchoolName").style.display = "block";
         } else {
             document.getElementById("subSchoolName").style.display = "none";
         }
-
-        showPanel();
-        loadSchedule(); 
+        showPanel(); loadSchedule(); 
     }
 
     function showPanel() {
         document.getElementById("adminPanel").style.display = "block";
         document.getElementById("userInfoDisplay").innerText = `User: ${currentUser} | ${currentSchoolName}`;
-        
         let badgeText = "Thành Viên";
         if (currentRole === 'root') badgeText = "QUẢN TRỊ VIÊN CẤP CAO";
         if (currentRole === 'school_admin') badgeText = "QUẢN TRỊ TRƯỜNG";
@@ -363,17 +321,14 @@
 
         const isAdmin = (currentRole === 'root' || currentRole === 'school_admin');
         const isRoot = (currentRole === 'root');
-
         document.querySelectorAll('.admin-only').forEach(el => el.style.display = isAdmin ? 'block' : 'none');
         document.querySelectorAll('.root-only').forEach(el => el.style.display = isRoot ? 'block' : 'none');
-
         switchTab('manual');
         if (isRoot) loadSchoolsList();
     }
 
     window.logoutAdmin = () => { 
-        currentUser = null; currentRole = null; currentSchoolId = 'root'; 
-        currentSchoolName = 'TRƯỜNG THPT SỐ 1 TRẦN PHÚ';
+        currentUser = null; currentRole = null; currentSchoolId = 'root'; currentSchoolName = 'TRƯỜNG THPT SỐ 1 TRẦN PHÚ';
         document.getElementById("adminPanel").style.display = "none";
         document.getElementById("headerSchoolName").innerText = currentSchoolName;
         document.getElementById("subSchoolName").style.display = "none";
@@ -384,16 +339,12 @@
     window.loadSchedule = function(isUserSelected = false) {
         let viewDateStr = document.getElementById("viewDate").value;
         if (!viewDateStr && !isUserSelected) {
-            viewDateStr = getMondayOfCurrentWeek();
-            document.getElementById("viewDate").value = viewDateStr;
+            viewDateStr = getMondayOfCurrentWeek(); document.getElementById("viewDate").value = viewDateStr;
         }
-
         const filterDate = document.getElementById("filterListDate").value;
         const todayStr = new Date().toISOString().split('T')[0];
         
-        onValue(ref(db, getDbPath('generalTask')), (s) => {
-            document.getElementById("displayGeneralTask").innerText = s.val() || "LỊCH TRƯỜNG " + currentSchoolName.toUpperCase();
-        });
+        onValue(ref(db, getDbPath('generalTask')), (s) => document.getElementById("displayGeneralTask").innerText = s.val() || "LỊCH TRƯỜNG " + currentSchoolName.toUpperCase());
 
         onValue(ref(db, getDbPath('schedules')), (snapshot) => {
             const allData = [];
@@ -419,7 +370,6 @@
                     <td>${renderTasks(tasks.filter(t => t.session === "Chiều"))}</td></tr>`;
             }
             document.getElementById("scheduleBody").innerHTML = html;
-            
             let end = new Date(start); end.setDate(start.getDate()+6);
             document.getElementById("scheduleDateRange").innerText = `(Từ ngày ${start.getDate()}/${start.getMonth()+1} đến ngày ${end.getDate()}/${end.getMonth()+1}/${end.getFullYear()})`;
         });
@@ -440,20 +390,15 @@
         document.querySelectorAll('#adminTabs .nav-link').forEach(l => l.classList.toggle('active', l.innerText.toLowerCase().includes(n === 'schools' ? 'quản lý trường' : (n === 'excel' ? 'excel' : (n === 'list' ? 'dữ liệu' : (n === 'accounts' ? 'tài khoản' : (n === 'general' ? 'chung' : 'nhập lịch')))))));
     };
     
-    // --- XỬ LÝ EXCEL MỚI (TỰ ĐỘNG THEO TRƯỜNG) ---
+    // --- XỬ LÝ EXCEL & XÓA TOÀN BỘ ---
     function excelDateToJSDate(serial) {
-        // Nếu là số (Excel Serial Date)
         if (typeof serial === 'number') {
-            const utc_days  = Math.floor(serial - 25569);
-            const utc_value = utc_days * 86400;                                      
-            const date_info = new Date(utc_value * 1000);
-            return date_info.toISOString().split('T')[0];
+            const utc_days  = Math.floor(serial - 25569); const utc_value = utc_days * 86400;                                      
+            const date_info = new Date(utc_value * 1000); return date_info.toISOString().split('T')[0];
         }
-        // Nếu là chuỗi (dd/mm/yyyy)
         if (typeof serial === 'string') {
             const parts = serial.split('/');
-            if (parts.length === 3) return `${parts[2]}-${parts[1]}-${parts[0]}`; // Chuyển thành yyyy-mm-dd
-            return serial; // Trả về nguyên gốc nếu không parse được (hy vọng là đúng format)
+            if (parts.length === 3) return `${parts[2]}-${parts[1]}-${parts[0]}`; return serial;
         }
         return '';
     }
@@ -462,48 +407,62 @@
         const fileInput = document.getElementById('excelFile');
         const file = fileInput.files[0];
         if (!file) { alert("Vui lòng chọn file Excel!"); return; }
-
         const reader = new FileReader();
         reader.onload = function(e) {
             const data = new Uint8Array(e.target.result);
             const workbook = XLSX.read(data, { type: 'array' });
             const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
             const jsonData = XLSX.utils.sheet_to_json(firstSheet);
-
             if (jsonData.length === 0) { alert("File không có dữ liệu!"); return; }
-
-            let count = 0;
-            // Xác định đường dẫn DB dựa trên trường đang đăng nhập
-            const targetPath = getDbPath('schedules');
-
+            let count = 0; const targetPath = getDbPath('schedules');
             jsonData.forEach(row => {
-                // Map dữ liệu từ cột tiếng Việt sang key
                 const rawDate = row['Ngày'] || row['ngay'] || row['date'];
                 const session = row['Buổi'] || row['buoi'] || 'Sáng';
                 const time = row['Giờ'] || row['gio'] || '';
                 const content = row['Nội dung'] || row['noi dung'] || row['content'];
                 const person = row['Người thực hiện'] || row['nguoi thuc hien'] || '';
-
                 if (rawDate && content) {
                     const finalDate = excelDateToJSDate(rawDate);
-                    const newData = {
-                        date: finalDate,
-                        session: session,
-                        time: time,
-                        content: content,
-                        person: person,
-                        creator: currentUser + " (Excel)"
-                    };
-                    push(ref(db, targetPath), newData);
+                    push(ref(db, targetPath), { date: finalDate, session, time, content, person, creator: currentUser + " (Excel)" });
                     count++;
                 }
             });
-
             alert(`Đã nhập thành công ${count} lịch công tác vào: ${currentSchoolName}`);
-            fileInput.value = ''; // Reset input
-            loadSchedule(); // Load lại lịch
+            fileInput.value = ''; loadSchedule();
         };
         reader.readAsArrayBuffer(file);
+    };
+
+    // --- HÀM XÓA TOÀN BỘ DỮ LIỆU (CÓ XÁC THỰC) ---
+    window.deleteAllSchedule = async () => {
+        // Chỉ cho phép Admin Root hoặc Admin Trường
+        if (currentRole === 'sub_account') {
+            alert("Bạn không có quyền sử dụng chức năng này. Vui lòng liên hệ Admin!"); return;
+        }
+
+        if (!confirm("CẢNH BÁO NGUY HIỂM:\n\nBạn đang thực hiện xóa TẤT CẢ lịch công tác hiện có của trường: " + currentSchoolName + ".\n\nDữ liệu sẽ bị mất vĩnh viễn và KHÔNG THỂ khôi phục.\nBạn có chắc chắn muốn tiếp tục không?")) return;
+
+        const inputPass = prompt("XÁC NHẬN BẢO MẬT:\nVui lòng nhập lại MẬT KHẨU (hoặc Mã Bảo Mật) của tài khoản Admin để thực hiện lệnh xóa:");
+        if (!inputPass) return;
+
+        let isAuthorized = false;
+
+        // Xác thực lại mật khẩu
+        if (currentRole === 'root') {
+            if (inputPass === '123456') isAuthorized = true;
+        } else if (currentRole === 'school_admin') {
+            // Lấy pass từ DB để so sánh
+            const snapshot = await get(ref(db, 'schools_registry/' + currentSchoolId));
+            if (snapshot.exists() && snapshot.val().password === inputPass) isAuthorized = true;
+        }
+
+        if (isAuthorized) {
+            remove(ref(db, getDbPath('schedules')))
+                .then(() => alert("Đã xóa toàn bộ dữ liệu lịch thành công!"))
+                .catch(err => alert("Lỗi khi xóa: " + err));
+        } else {
+            alert("Mật khẩu xác nhận KHÔNG ĐÚNG! Hủy bỏ lệnh xóa.");
+        }
     };
 
     // --- CÁC HÀM CŨ ---
@@ -516,64 +475,39 @@
             document.getElementById("accUsername").value = ''; document.getElementById("accCode").value = '';
         }
     };
-
     function loadSubAccounts() {
         onValue(ref(db, getDbPath('subAccounts')), (snap) => {
-            let h = "";
-            snap.forEach(c => { h += `<tr><td><b>${c.val().username}</b></td><td>${c.val().code}</td><td><button class="btn btn-xs btn-danger" onclick="removeAcc('${c.key}')">Xóa</button></td></tr>`; });
+            let h = ""; snap.forEach(c => { h += `<tr><td><b>${c.val().username}</b></td><td>${c.val().code}</td><td><button class="btn btn-xs btn-danger" onclick="removeAcc('${c.key}')">Xóa</button></td></tr>`; });
             document.getElementById("accountTableBody").innerHTML = h;
         });
     }
-
     window.removeAcc = (key) => confirm("Xóa tài khoản này?") && remove(ref(db, getDbPath(`subAccounts/${key}`)));
-
     window.addSchedule = () => { 
-        const data = { 
-            date: document.getElementById("inputDate").value, session: document.getElementById("inputSession").value,
-            time: document.getElementById("inputTime").value, content: document.getElementById("inputContent").value,
-            person: document.getElementById("inputPerson").value, creator: currentUser
-        };
+        const data = { date: document.getElementById("inputDate").value, session: document.getElementById("inputSession").value, time: document.getElementById("inputTime").value, content: document.getElementById("inputContent").value, person: document.getElementById("inputPerson").value, creator: currentUser };
         const key = document.getElementById("editKey").value;
-        if(key) update(ref(db, getDbPath('schedules/'+key)), data).then(cancelEdit);
-        else push(ref(db, getDbPath('schedules')), data).then(cancelEdit);
+        if(key) update(ref(db, getDbPath('schedules/'+key)), data).then(cancelEdit); else push(ref(db, getDbPath('schedules')), data).then(cancelEdit);
     };
     window.cancelEdit = () => { document.getElementById("editKey").value = ""; document.getElementById("inputContent").value = ""; loadSchedule(); };
-    window.editItem = (k,d,s,t,c,p) => {
-        document.getElementById("editKey").value = k; document.getElementById("inputDate").value = d;
-        document.getElementById("inputSession").value = s; document.getElementById("inputTime").value = t;
-        document.getElementById("inputContent").value = c; document.getElementById("inputPerson").value = p;
-        switchTab('manual');
-    };
+    window.editItem = (k,d,s,t,c,p) => { document.getElementById("editKey").value = k; document.getElementById("inputDate").value = d; document.getElementById("inputSession").value = s; document.getElementById("inputTime").value = t; document.getElementById("inputContent").value = c; document.getElementById("inputPerson").value = p; switchTab('manual'); };
     window.deleteItem = (k) => confirm("Xóa lịch này?") && remove(ref(db, getDbPath('schedules/'+k)));
     window.saveGeneralTask = () => set(ref(db, getDbPath('generalTask')), document.getElementById("inputGeneralTask").value);
-
     window.createNewSchool = () => {
         if (currentRole !== 'root') return;
         const name = document.getElementById("newSchoolName").value.trim();
         const code = document.getElementById("newSchoolCode").value.trim();
         if (!name || code.length < 4) { alert("Vui lòng nhập tên trường và mã bảo mật (4 số)!"); return; }
-
         const username = removeVietnameseTones(name); 
         get(ref(db, 'schools_registry/'+username)).then(snap => {
-            if (snap.exists()) {
-                alert("Trường này đã tồn tại!");
-            } else {
-                const newSchoolData = { name: name, username: username, password: code, createdAt: new Date().toISOString() };
-                set(ref(db, 'schools_registry/' + username), newSchoolData).then(() => {
-                    alert(`Đã tạo thành công!\nTrường: ${name}\nUser Admin: ${username}\nPass: ${code}`);
-                    document.getElementById("newSchoolName").value = '';
+            if (snap.exists()) { alert("Trường này đã tồn tại!"); } else {
+                set(ref(db, 'schools_registry/' + username), { name: name, username: username, password: code, createdAt: new Date().toISOString() }).then(() => {
+                    alert(`Đã tạo thành công!\nTrường: ${name}\nUser Admin: ${username}\nPass: ${code}`); document.getElementById("newSchoolName").value = '';
                 });
             }
         });
     };
-
     function loadSchoolsList() {
         onValue(ref(db, 'schools_registry'), (snap) => {
-            let html = "";
-            snap.forEach(c => {
-                const s = c.val();
-                html += `<tr><td>${s.name}</td><td class="fw-bold text-primary">${s.username}</td><td>${s.password}</td><td>${s.createdAt ? s.createdAt.split('T')[0] : ''}</td></tr>`;
-            });
+            let html = ""; snap.forEach(c => { const s = c.val(); html += `<tr><td>${s.name}</td><td class="fw-bold text-primary">${s.username}</td><td>${s.password}</td><td>${s.createdAt ? s.createdAt.split('T')[0] : ''}</td></tr>`; });
             document.getElementById("schoolsListBody").innerHTML = html;
         });
     }
