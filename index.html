@@ -103,7 +103,7 @@
         </div>
 
         <ul class="nav nav-tabs mb-3" id="adminTabs">
-            <li class="nav-item"><button class="nav-link active" onclick="switchTab('general')">1. Công Việc Chung</button></li>
+            <li class="nav-item"><button class="nav-link active" onclick="switchTab('general')">1. Cấu Hình Tuần & Chung</button></li>
             <li class="nav-item"><button class="nav-link" onclick="switchTab('manual')">2. Nhập Lịch</button></li>
             <li class="nav-item admin-only"><button class="nav-link" onclick="switchTab('excel')">3. Excel (Nhập/Xuất)</button></li>
             <li class="nav-item admin-only"><button class="nav-link" onclick="switchTab('list')">4. Tất cả dữ liệu</button></li>
@@ -112,24 +112,38 @@
         </ul>
 
         <div id="tabGeneral">
-            <div class="row g-2">
-                <div class="col-md-3">
-                    <div class="input-group">
-                        <span class="input-group-text fw-bold">Tuần thứ:</span>
-                        <input type="number" id="inputWeekNumber" class="form-control" placeholder="VD: 20">
+            <div class="card card-body bg-light mb-3">
+                <h6 class="fw-bold text-primary"><i class="fas fa-cogs"></i> THIẾT LẬP MỐC TUẦN & NỘI DUNG CHUNG</h6>
+                <div class="row g-2 align-items-end">
+                    <div class="col-md-3">
+                        <label class="small fw-bold">Ngày bắt đầu áp dụng (Thứ 2):</label>
+                        <input type="date" id="inputWeekStartDate" class="form-control">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="small fw-bold">Là Tuần thứ:</label>
+                        <input type="number" id="inputWeekNum" class="form-control" placeholder="VD: 1">
+                    </div>
+                    <div class="col-md-5">
+                        <label class="small fw-bold">Nội dung chung:</label>
+                        <input type="text" id="inputGeneralTask" class="form-control" placeholder="VD: LỊCH HỌC KỲ II...">
+                    </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-primary fw-bold w-100" onclick="saveWeekConfig()">LƯU MỐC MỚI</button>
                     </div>
                 </div>
-                <div class="col-md-7">
-                    <div class="input-group">
-                        <span class="input-group-text fw-bold">Nội dung chung:</span>
-                        <input type="text" id="inputGeneralTask" class="form-control" placeholder="Nhập tiêu đề công việc chung...">
-                    </div>
-                </div>
-                <div class="col-md-2">
-                    <button class="btn btn-warning fw-bold w-100" onclick="saveGeneralTask()">Lưu Thay Đổi</button>
-                </div>
+                <p class="small text-muted mt-2 mb-0">
+                    * Hệ thống sẽ dùng <b>mốc gần nhất</b> so với ngày bạn đang xem để tính số tuần.<br>
+                    * Ví dụ: Bạn nhập ngày 05/09 là Tuần 1. Thì ngày 12/09 tự động là Tuần 2. Nếu sau Tết bạn nhập ngày 20/01 là Tuần 19, thì các tuần sau đó sẽ đếm tiếp từ 19.
+                </p>
             </div>
-            <p class="small text-muted mt-2 mb-0">* Nhập số tuần để hiển thị "LỊCH LÀM VIỆC (TUẦN XX)".</p>
+            
+            <h6 class="fw-bold mt-3">DANH SÁCH CÁC MỐC ĐÃ LƯU</h6>
+            <table class="table table-sm table-bordered">
+                <thead class="table-secondary">
+                    <tr><th>Ngày áp dụng</th><th>Tuần thứ</th><th>Nội dung chung</th><th>Thao tác</th></tr>
+                </thead>
+                <tbody id="weekConfigsBody"></tbody>
+            </table>
         </div>
 
         <div id="tabManual" style="display: none;">
@@ -364,7 +378,7 @@
         loadSchedule();
     };
 
-    // --- LOGIC LỊCH & TUẦN ---
+    // --- LOGIC LỊCH & TÍNH TOÁN TUẦN THÔNG MINH ---
     window.loadSchedule = function(isUserSelected = false) {
         let viewDateStr = document.getElementById("viewDate").value;
         if (!viewDateStr && !isUserSelected) {
@@ -373,19 +387,54 @@
         const filterDate = document.getElementById("filterListDate").value;
         const todayStr = new Date().toISOString().split('T')[0];
         
-        // Load General Task
-        onValue(ref(db, getDbPath('generalTask')), (s) => document.getElementById("displayGeneralTask").innerText = s.val() || "LỊCH CÔNG TÁC " + currentSchoolName.toUpperCase());
+        // 1. Lấy danh sách cấu hình tuần (Week Configs)
+        // Cấu trúc data: weekConfigs: { key1: {startDate: '2025-09-05', weekNum: 1, generalTask: '...'}, ... }
+        onValue(ref(db, getDbPath('weekConfigs')), (snap) => {
+            const configs = [];
+            snap.forEach(child => {
+                configs.push(child.val());
+            });
 
-        // Load Week Number and Update Title
-        onValue(ref(db, getDbPath('currentWeek')), (snap) => {
-            const weekNum = snap.val();
-            // Nếu có số tuần thì hiển thị, nếu không thì để mặc định
-            const title = weekNum ? `LỊCH LÀM VIỆC (TUẦN ${weekNum})` : "LỊCH LÀM VIỆC";
-            document.getElementById("mainTitle").innerText = title;
-            // Cập nhật giá trị vào ô input nếu đang mở admin
-            if(document.getElementById("inputWeekNumber")) document.getElementById("inputWeekNumber").value = weekNum || "";
+            // Sắp xếp các mốc thời gian tăng dần
+            configs.sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+
+            // Hiển thị danh sách trong Admin
+            if(document.getElementById("weekConfigsBody")){
+                let htmlConfig = configs.map(c => `<tr><td>${c.startDate}</td><td>${c.weekNum}</td><td>${c.generalTask}</td><td><button class="btn btn-xs btn-danger" onclick="deleteWeekConfig('${c.startDate}')">Xóa</button></td></tr>`).join("");
+                document.getElementById("weekConfigsBody").innerHTML = htmlConfig;
+            }
+
+            // Logic tính toán: Tìm mốc cấu hình GẦN NHẤT nhưng <= ngày đang xem (viewDate)
+            const viewDate = new Date(viewDateStr);
+            let activeConfig = null;
+
+            for (let i = configs.length - 1; i >= 0; i--) {
+                const configDate = new Date(configs[i].startDate);
+                if (configDate <= viewDate) {
+                    activeConfig = configs[i];
+                    break;
+                }
+            }
+
+            // Hiển thị kết quả
+            if (activeConfig) {
+                // Tính khoảng cách tuần từ mốc này
+                const configDate = new Date(activeConfig.startDate);
+                const diffTime = viewDate - configDate;
+                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                const weeksPassed = Math.floor(diffDays / 7);
+                const currentWeek = parseInt(activeConfig.weekNum) + weeksPassed;
+
+                document.getElementById("mainTitle").innerText = `LỊCH LÀM VIỆC (TUẦN ${currentWeek})`;
+                document.getElementById("displayGeneralTask").innerText = activeConfig.generalTask || "LỊCH CÔNG TÁC";
+            } else {
+                // Nếu không tìm thấy mốc nào (ngày xem nhỏ hơn mốc đầu tiên)
+                document.getElementById("mainTitle").innerText = "LỊCH LÀM VIỆC";
+                document.getElementById("displayGeneralTask").innerText = "Chưa có thông tin chung";
+            }
         });
 
+        // 2. Load lịch chi tiết
         onValue(ref(db, getDbPath('schedules')), (snapshot) => {
             const allData = [];
             snapshot.forEach(child => { let v = child.val(); v.key = child.key; allData.push(v); });
@@ -430,6 +479,41 @@
         document.querySelectorAll('#adminTabs .nav-link').forEach(l => l.classList.toggle('active', l.innerText.toLowerCase().includes(n === 'schools' ? 'quản lý trường' : (n === 'excel' ? 'excel' : (n === 'list' ? 'dữ liệu' : (n === 'accounts' ? 'tài khoản' : (n === 'general' ? 'chung' : 'nhập lịch')))))));
     };
     
+    // --- LƯU CẤU HÌNH TUẦN MỚI ---
+    window.saveWeekConfig = () => {
+        const startDate = document.getElementById("inputWeekStartDate").value;
+        const weekNum = document.getElementById("inputWeekNum").value;
+        const generalTask = document.getElementById("inputGeneralTask").value;
+
+        if (!startDate || !weekNum) {
+            alert("Vui lòng nhập Ngày bắt đầu và Số tuần!");
+            return;
+        }
+
+        // Dùng ngày làm Key để tránh trùng lặp
+        const configKey = startDate.replace(/-/g, ""); // 2025-09-05 -> 20250905
+        const data = {
+            startDate: startDate,
+            weekNum: parseInt(weekNum),
+            generalTask: generalTask
+        };
+
+        update(ref(db, getDbPath(`weekConfigs/${configKey}`)), data)
+            .then(() => {
+                alert("Đã lưu mốc thời gian mới thành công!");
+                document.getElementById("inputWeekStartDate").value = "";
+                document.getElementById("inputWeekNum").value = "";
+                document.getElementById("inputGeneralTask").value = "";
+            })
+            .catch(error => alert("Lỗi: " + error));
+    };
+
+    window.deleteWeekConfig = (startDate) => {
+        if(!confirm("Xóa mốc cấu hình này?")) return;
+        const configKey = startDate.replace(/-/g, "");
+        remove(ref(db, getDbPath(`weekConfigs/${configKey}`)));
+    };
+
     // --- IMPORT & EXPORT EXCEL ---
     function excelDateToJSDate(serial) {
         if (typeof serial === 'number') {
@@ -473,33 +557,19 @@
         reader.readAsArrayBuffer(file);
     };
 
-    // Hàm xuất dữ liệu ra Excel
     window.exportToExcel = () => {
         if (!confirm("Tải xuống toàn bộ lịch công tác của trường " + currentSchoolName + "?")) return;
-        
         get(ref(db, getDbPath('schedules'))).then((snapshot) => {
             if (!snapshot.exists()) { alert("Chưa có dữ liệu để xuất!"); return; }
-            
             const exportData = [];
             snapshot.forEach(child => {
                 const v = child.val();
-                exportData.push({
-                    "Ngày": v.date,
-                    "Buổi": v.session,
-                    "Giờ": v.time,
-                    "Nội dung": v.content,
-                    "Người thực hiện": v.person
-                });
+                exportData.push({ "Ngày": v.date, "Buổi": v.session, "Giờ": v.time, "Nội dung": v.content, "Người thực hiện": v.person });
             });
-
-            // Sắp xếp theo ngày tăng dần
             exportData.sort((a, b) => new Date(a['Ngày']) - new Date(b['Ngày']));
-
             const worksheet = XLSX.utils.json_to_sheet(exportData);
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "LichCongTac");
-            
-            // Tạo tên file: LichCongTac_TenTruong_NgayHienTai.xlsx
             const dateStr = new Date().toISOString().split('T')[0];
             const safeName = removeVietnameseTones(currentSchoolName).replace(/\s/g, '_');
             XLSX.writeFile(workbook, `LichCongTac_${safeName}_${dateStr}.xlsx`);
@@ -557,14 +627,6 @@
     window.editItem = (k,d,s,t,c,p) => { document.getElementById("editKey").value = k; document.getElementById("inputDate").value = d; document.getElementById("inputSession").value = s; document.getElementById("inputTime").value = t; document.getElementById("inputContent").value = c; document.getElementById("inputPerson").value = p; switchTab('manual'); };
     window.deleteItem = (k) => confirm("Xóa?") && remove(ref(db, getDbPath('schedules/'+k)));
     
-    // Cập nhật hàm lưu Công việc chung để lưu thêm cả Số tuần
-    window.saveGeneralTask = () => {
-        const updates = {};
-        updates[getDbPath('generalTask')] = document.getElementById("inputGeneralTask").value;
-        updates[getDbPath('currentWeek')] = document.getElementById("inputWeekNumber").value;
-        update(ref(db), updates).then(() => alert("Đã lưu thông tin chung và số tuần!"));
-    };
-
     window.createNewSchool = () => {
         if (currentRole !== 'root') return;
         const name = document.getElementById("newSchoolName").value.trim();
@@ -587,6 +649,8 @@
     }
 
     loadSchedule();
+    // Expose deleteWeekConfig to window
+    window.deleteWeekConfig = window.deleteWeekConfig;
     const originalSwitchTab = window.switchTab;
     window.switchTab = function(n) { originalSwitchTab(n); if (n === 'accounts') loadSubAccounts(); }
 </script>
