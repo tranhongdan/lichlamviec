@@ -3,309 +3,551 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>He Thong Quan Ly Lich Tap Trung</title>
+    <title>Hệ Thống Lịch Công Tác Giáo Dục</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        body { font-family: 'Times New Roman', Times, serif; background-color: #f4f7f6; color: #000; }
-        .container { max-width: 1200px; background: white; padding: 30px; margin-top: 20px; box-shadow: 0 0 20px rgba(0,0,0,0.1); border-radius: 12px; }
-        .header-box { border-bottom: 2px solid #0d6efd; padding-bottom: 15px; margin-bottom: 20px; }
-        .main-title { text-align: center; color: #0d6efd; font-weight: bold; text-transform: uppercase; margin: 20px 0; }
-        .schedule-table { width: 100%; border-collapse: collapse; border: 1px solid #000; }
-        .schedule-table th, .schedule-table td { border: 1px solid #000; padding: 12px; vertical-align: top; }
-        .schedule-table thead th { background-color: #e3f2fd; text-align: center; color: #0d47a1; }
-        .general-task { color: red; font-weight: bold; text-align: center; background-color: #fff3cd; padding: 10px; font-size: 18px; }
-        .today-highlight { background-color: #e3f5ff !important; border: 2px solid #0288d1 !important; }
+        body { font-family: 'Times New Roman', Times, serif; background-color: #f4f6f9; color: #000; }
+        .container { max-width: 1250px; background: white; padding: 40px 30px; margin-top: 20px; margin-bottom: 50px; box-shadow: 0 0 15px rgba(0,0,0,0.1); }
         
-        /* Admin Panels */
-        #adminPanel, #superAdminPanel { display: none; background: #fff; padding: 25px; border: 2px dashed #0288d1; border-radius: 10px; margin-top: 25px; }
-        .nav-tabs .nav-link { color: #555; font-weight: bold; }
-        .nav-tabs .nav-link.active { color: #0d6efd; border-bottom: 3px solid #0d6efd; }
+        .header-top { display: flex; justify-content: space-between; text-align: center; margin-bottom: 15px; }
+        .header-left h4 { margin: 0; font-size: 15px; text-transform: uppercase; font-weight: normal; }
+        .header-left h5 { margin: 0; font-size: 15px; font-weight: bold; text-decoration: underline; margin-top: 5px;}
+        .header-right h4 { margin: 0; font-size: 15px; text-transform: uppercase; font-weight: bold; }
+        .header-right h5 { margin: 0; font-size: 15px; font-weight: bold; margin-top: 5px; }
+
+        .main-title { text-align: center; color: #0d6efd; text-transform: uppercase; font-weight: bold; margin: 25px 0 5px 0; font-size: 24px; }
+        .school-name-display { text-align: center; color: #dc3545; font-weight: bold; font-size: 18px; margin-bottom: 5px; text-transform: uppercase;}
+        .date-range-display { text-align: center; font-style: italic; margin-bottom: 20px; font-size: 16px; color: #333; }
         
-        .result-box { background: #f8f9fa; border: 1px solid #dee2e6; padding: 15px; border-radius: 8px; margin-top: 15px; display: none; }
-        .btn-xs { padding: 2px 8px; font-size: 12px; }
+        .schedule-table { width: 100%; border-collapse: collapse; border: 1px solid black; table-layout: fixed; }
+        .schedule-table th, .schedule-table td { border: 1px solid black; padding: 8px; vertical-align: top; font-size: 15px; word-wrap: break-word; }
+        .schedule-table thead th { background-color: #e3f2fd; text-align: center; vertical-align: middle; font-weight: bold; text-transform: uppercase; color: #0d47a1; }
         
-        @media print { .no-print { display: none !important; } .container { box-shadow: none; max-width: 100%; padding: 0; } }
+        .col-thu { width: 90px; text-align: center; vertical-align: middle !important; font-weight: bold; color: #0056b3; }
+        .col-ngay { width: 115px; text-align: center; vertical-align: middle !important; font-weight: bold; }
+        
+        .today-highlight { background-color: #e1f5fe !important; }
+
+        .general-task { color: red; font-weight: bold; text-align: center; text-transform: uppercase; padding: 10px; background-color: #fff3cd; font-size: 16px; }
+        
+        .task-item { margin-bottom: 6px; padding-bottom: 4px; border-bottom: 1px dashed #eee; line-height: 1.5; display: flex; align-items: flex-start; }
+        .task-item:last-child { border-bottom: none; }
+        .task-bullet { color: #0288d1; margin-right: 6px; margin-top: 7px; font-size: 6px; }
+        
+        .task-content-wrapper { flex: 1; }
+        .task-time { font-weight: bold; color: #000; }
+        .task-person { font-style: italic; color: #555; margin-left: 4px; }
+
+        .control-bar { margin-top: 30px; padding: 20px; background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; }
+        #adminPanel { display: none; background: #fff; padding: 20px; border: 2px dashed #0288d1; border-radius: 10px; margin-top: 20px; }
+        .nav-tabs .nav-link.active { font-weight: bold; color: #0288d1; border-bottom: 3px solid #0288d1; }
+
+        .footer-copyright { margin-top: 30px; text-align: center; font-size: 13px; color: #666; border-top: 1px solid #eee; padding-top: 15px; }
+        
+        @media print {
+            .no-print { display: none !important; }
+            .container { box-shadow: none; margin: 0; padding: 0; max-width: 100%; width: 100%; }
+            .today-highlight { background-color: transparent !important; }
+        }
     </style>
 </head>
 <body>
 
-<div id="app" class="container" style="display:none;">
-    <div class="header-box row align-items-center">
-        <div class="col-md-6 text-center text-md-start">
-            <h6 class="mb-1">SỞ GIÁO DỤC VÀ ĐÀO TẠO ĐẮK LẮK</h6>
-            <h5 id="schName" class="fw-bold text-decoration-underline">TRƯỜNG ĐANG TẢI...</h5>
+<div class="container">
+    <div class="header-top">
+        <div class="header-left">
+            <h4>SỞ GIÁO DỤC VÀ ĐÀO TẠO ĐẮK LẮK</h4>
+            <h5 id="headerSchoolName">TRƯỜNG THPT SỐ 1 TRẦN PHÚ</h5>
         </div>
-        <div class="col-md-6 text-center text-md-end">
-            <h6 class="mb-1 fw-bold">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</h6>
-            <h6>Độc lập - Tự do - Hạnh phúc</h6>
+        <div class="header-right">
+            <h4>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</h4>
+            <h5>Độc lập - Tự do - Hạnh phúc</h5>
         </div>
     </div>
 
     <h2 class="main-title">LỊCH LÀM VIỆC</h2>
-    <p id="dateRangeTxt" class="text-center fst-italic mb-3"></p>
+    <div id="subSchoolName" class="school-name-display" style="display:none"></div>
+    <div id="scheduleDateRange" class="date-range-display"></div>
 
     <table class="schedule-table">
         <thead>
-            <tr><th width="12%">THỨ</th><th width="15%">NGÀY</th><th width="36.5%">BUỔI SÁNG</th><th width="36.5%">BUỔI CHIỀU</th></tr>
-            <tr><td colspan="4" class="general-task" id="genTaskCell">ĐANG TẢI DỮ LIỆU...</td></tr>
+            <tr><th class="col-thu">THỨ</th><th class="col-ngay">NGÀY</th><th>BUỔI SÁNG</th><th>BUỔI CHIỀU</th></tr>
+            <tr><td colspan="4" class="general-task" id="displayGeneralTask">Đang tải dữ liệu...</td></tr>
         </thead>
-        <tbody id="schBody"></tbody>
+        <tbody id="scheduleBody"></tbody>
     </table>
 
-    <div class="no-print mt-4 p-3 bg-light rounded d-flex justify-content-between align-items-center border">
-        <div>
-            <label class="fw-bold me-2">Xem tuần:</label>
-            <input type="date" id="viewDate" class="form-control d-inline-block w-auto" onchange="loadSchedule(true)">
-        </div>
-        <div>
-            <button class="btn btn-outline-secondary me-2" onclick="window.print()"><i class="fas fa-print"></i> In lịch</button>
-            <button class="btn btn-danger" onclick="auth()"><i class="fas fa-user-shield"></i> Quản trị</button>
-        </div>
-    </div>
-
-    <div id="superAdminPanel" class="no-print">
-        <h5 class="text-danger fw-bold border-bottom pb-2"><i class="fas fa-crown"></i> HỆ THỐNG QUẢN TRỊ TỐI CAO</h5>
-        <div class="row g-2 mt-3">
-            <div class="col-md-3"><input type="text" id="newSchName" class="form-control" placeholder="Tên trường (VD: THPT Số 1)"></div>
-            <div class="col-md-2"><input type="text" id="newSchId" class="form-control" placeholder="Mã ID (VD: thptso1)"></div>
-            <div class="col-md-3"><input type="text" id="newPrefix" class="form-control" placeholder="Phần chữ MK (VD: admin)"></div>
-            <div class="col-md-2"><input type="text" id="newPin" class="form-control" maxlength="4" placeholder="Mã PIN xxxx"></div>
-            <div class="col-md-2"><button class="btn btn-primary w-100" onclick="createNewSchool()">TẠO TRƯỜNG</button></div>
-        </div>
-
-        <div id="resultBox" class="result-box">
-            <h6 class="text-success fw-bold">TẠO TRƯỜNG THÀNH CÔNG!</h6>
-            <textarea id="shareLink" class="form-control mb-2" rows="3" readonly></textarea>
-            <button class="btn btn-sm btn-dark" onclick="copyLink()">Sao chép thông tin gửi đi</button>
-        </div>
-
-        <div class="table-responsive mt-4">
-            <table class="table table-bordered table-sm align-middle">
-                <thead class="table-dark"><tr><th>ID Trường</th><th>Tên Hiển Thị</th><th>Mật khẩu Admin</th><th>Thao tác</th></tr></thead>
-                <tbody id="masterSchoolList"></tbody>
-            </table>
+    <div class="control-bar no-print">
+        <div class="row align-items-center">
+            <div class="col-md-5">
+                <div class="input-group">
+                    <span class="input-group-text fw-bold bg-white"><i class="far fa-calendar-alt text-primary"></i>&nbsp; Xem từ ngày:</span>
+                    <input type="date" id="viewDate" class="form-control" onchange="loadSchedule(true)">
+                </div>
+            </div>
+            <div class="col-md-7 text-end">
+                <button class="btn btn-secondary me-2" onclick="window.print()"><i class="fas fa-print"></i> In Lịch</button>
+                <button class="btn btn-danger" onclick="toggleAdmin()"><i class="fas fa-user-lock"></i> Đăng nhập</button>
+            </div>
         </div>
     </div>
 
     <div id="adminPanel" class="no-print">
-        <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
-            <h5 class="text-primary fw-bold m-0"><i class="fas fa-user-edit"></i> QUẢN TRỊ VIÊN: <span id="roleName"></span></h5>
-            <button class="btn btn-sm btn-outline-danger" onclick="location.reload()">Đăng xuất</button>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="text-primary m-0"><i class="fas fa-user-shield"></i> HỆ THỐNG QUẢN TRỊ <span id="adminBadge" class="badge bg-warning text-dark"></span></h5>
+            <div id="userInfoDisplay" class="badge bg-info text-dark p-2"></div>
+            <button class="btn btn-sm btn-outline-danger" onclick="logoutAdmin()">Đăng xuất</button>
         </div>
 
         <ul class="nav nav-tabs mb-3" id="adminTabs">
-            <li class="nav-item"><button class="nav-link active" onclick="tab('input')">1. Nhập lịch</button></li>
-            <li class="nav-item is-admin"><button class="nav-link" onclick="tab('gen')">2. Thông báo chung</button></li>
-            <li class="nav-item is-admin"><button class="nav-link" onclick="tab( 'acc')">3. Tài khoản con</button></li>
-            <li class="nav-item is-admin"><button class="nav-link" onclick="tab('pw')">4. Đổi mật khẩu</button></li>
+            <li class="nav-item"><button class="nav-link active" onclick="switchTab('general')">1. Công Việc Chung</button></li>
+            <li class="nav-item"><button class="nav-link" onclick="switchTab('manual')">2. Nhập Lịch</button></li>
+            <li class="nav-item admin-only"><button class="nav-link" onclick="switchTab('excel')">3. Nhập từ Excel</button></li>
+            <li class="nav-item admin-only"><button class="nav-link" onclick="switchTab('list')">4. Tất cả dữ liệu</button></li>
+            <li class="nav-item admin-only"><button class="nav-link" onclick="switchTab('accounts')">5. Tài khoản con</button></li>
+            <li class="nav-item root-only" style="display:none"><button class="nav-link text-danger fw-bold" onclick="switchTab('schools')">6. QUẢN LÝ TRƯỜNG</button></li>
         </ul>
 
-        <div id="tabInput">
-            <div class="row g-2">
+        <div id="tabGeneral">
+            <div class="input-group">
+                <span class="input-group-text fw-bold">Nội dung:</span>
+                <input type="text" id="inputGeneralTask" class="form-control">
+                <button class="btn btn-warning fw-bold" onclick="saveGeneralTask()">Lưu Thay Đổi</button>
+            </div>
+        </div>
+
+        <div id="tabManual" style="display: none;">
+            <div class="row g-3">
                 <input type="hidden" id="editKey">
-                <div class="col-md-3"><label class="small fw-bold">Ngày</label><input type="date" id="iDate" class="form-control"></div>
-                <div class="col-md-2"><label class="small fw-bold">Buổi</label><select id="iSess" class="form-select"><option>Sáng</option><option>Chiều</option></select></div>
-                <div class="col-md-2"><label class="small fw-bold">Giờ</label><input type="text" id="iTime" class="form-control" placeholder="07:30"></div>
-                <div class="col-md-5"><label class="small fw-bold">Người thực hiện</label><input type="text" id="iPers" class="form-control"></div>
-                <div class="col-12 mt-2"><label class="small fw-bold">Nội dung</label><input type="text" id="iCont" class="form-control"></div>
+                <div class="col-md-3"><label class="fw-bold">Ngày:</label><input type="date" id="inputDate" class="form-control"></div>
+                <div class="col-md-3"><label class="fw-bold">Buổi:</label><select id="inputSession" class="form-select"><option value="Sáng">Buổi Sáng</option><option value="Chiều">Buổi Chiều</option></select></div>
+                <div class="col-md-3"><label class="fw-bold">Giờ:</label><input type="text" id="inputTime" class="form-control" placeholder="07:00"></div>
+                <div class="col-md-3"><label class="fw-bold">Người thực hiện:</label><input type="text" id="inputPerson" class="form-control"></div>
+                <div class="col-12"><label class="fw-bold">Nội dung công việc:</label><input type="text" id="inputContent" class="form-control"></div>
                 <div class="col-12 text-center mt-3">
-                    <button class="btn btn-success px-5 fw-bold" onclick="save()">LƯU LỊCH CÔNG TÁC</button>
+                    <button id="btnSaveManual" class="btn btn-success px-5" onclick="addSchedule()">LƯU DỮ LIỆU</button>
+                    <button id="btnCancelEdit" class="btn btn-secondary px-4" style="display:none" onclick="cancelEdit()">HỦY</button>
                 </div>
             </div>
-            <div id="miniList" class="mt-4 border-top pt-2"></div>
         </div>
 
-        <div id="tabGen" style="display:none">
-            <label class="fw-bold">Nội dung thông báo (Màu đỏ):</label>
-            <div class="input-group mt-2"><input type="text" id="iGen" class="form-control"><button class="btn btn-warning" onclick="saveG()">Cập nhật</button></div>
+        <div id="tabExcel" style="display: none;">
+            <div class="alert alert-info">Chức năng nhập từ Excel đang được cập nhật cho phiên bản đa trường.</div>
         </div>
 
-        <div id="tabAcc" style="display:none">
-            <div class="row g-2 mb-3">
-                <div class="col-5"><input type="text" id="subName" class="form-control" placeholder="Tên User"></div>
-                <div class="col-4"><input type="text" id="subPin" class="form-control" placeholder="PIN 4 số"></div>
-                <div class="col-3"><button class="btn btn-primary w-100" onclick="addSub()">Thêm User</button></div>
+        <div id="tabList" style="display: none;">
+            <div class="alert alert-light border mb-3 d-flex align-items-center gap-3">
+                <label class="fw-bold mb-0">Lọc theo ngày:</label>
+                <input type="date" id="filterListDate" class="form-control w-auto" onchange="loadSchedule()">
+                <button class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('filterListDate').value=''; loadSchedule();">Xem tất cả</button>
             </div>
-            <div id="subAccList"></div>
+            <div class="table-responsive" style="max-height: 450px;">
+                <table class="table table-sm table-bordered">
+                    <thead class="table-dark"><tr><th>Ngày</th><th>Buổi</th><th>Giờ</th><th>Nội dung</th><th>Người</th><th>Thao tác</th></tr></thead>
+                    <tbody id="manageTableBody"></tbody>
+                </table>
+            </div>
         </div>
 
-        <div id="tabPw" style="display:none">
-            <div class="row g-2">
-                <div class="col-6"><label class="small">Phần chữ:</label><input type="text" id="pPre" class="form-control"></div>
-                <div class="col-6"><label class="small">Mã PIN:</label><input type="text" id="pPin" class="form-control" maxlength="4"></div>
-                <div class="col-12 mt-2"><button class="btn btn-danger" onclick="savePw()">Lưu mật khẩu Admin mới</button></div>
+        <div id="tabAccounts" style="display: none;">
+            <div class="card card-body mb-3 bg-light">
+                <p class="small mb-2"><i>* Tạo tài khoản cho giáo viên/nhân viên trong trường của bạn. Họ chỉ có quyền sửa lịch, không có quyền quản trị.</i></p>
+                <div class="row g-2">
+                    <div class="col-md-5"><input type="text" id="accUsername" class="form-control" placeholder="Tên tài khoản (ví dụ: gv01)"></div>
+                    <div class="col-md-4"><input type="text" id="accCode" class="form-control" maxlength="4" placeholder="Mã bảo mật (4 số)"></div>
+                    <div class="col-md-3"><button class="btn btn-primary w-100" onclick="createSubAccount()">Tạo Acc Con</button></div>
+                </div>
             </div>
+            <table class="table table-bordered table-sm">
+                <thead><tr class="table-secondary"><th>Tài khoản hiện có</th><th>Mã bảo mật</th><th>Thao tác</th></tr></thead>
+                <tbody id="accountTableBody"></tbody>
+            </table>
+        </div>
+
+        <div id="tabSchools" style="display: none;">
+            <div class="card card-body mb-3 border-danger">
+                <h6 class="text-danger fw-bold">TẠO TRƯỜNG THÀNH PHẦN MỚI</h6>
+                <div class="row g-2">
+                    <div class="col-md-6">
+                        <label class="small fw-bold">Tên hiển thị trường:</label>
+                        <input type="text" id="newSchoolName" class="form-control" placeholder="Ví dụ: Trường THPT Chu Văn An">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="small fw-bold">Mã bảo mật (Admin):</label>
+                        <input type="text" id="newSchoolCode" class="form-control" maxlength="4" value="1234">
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button class="btn btn-danger w-100 fw-bold" onclick="createNewSchool()">TẠO NGAY</button>
+                    </div>
+                </div>
+                <div class="mt-2 small text-muted">
+                    * Hệ thống sẽ tự động tạo tên đăng nhập bằng cách viết liền không dấu tên trường.<br>
+                    Ví dụ: <b>Trường THPT Chu Văn An</b> -> User: <b>truongthptchuvanan</b>
+                </div>
+            </div>
+
+            <h6 class="fw-bold mt-4">DANH SÁCH CÁC TRƯỜNG ĐÃ TẠO</h6>
+            <table class="table table-bordered table-striped">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Tên Trường</th>
+                        <th>User Admin</th>
+                        <th>Pass Admin</th>
+                        <th>Ngày tạo</th>
+                    </tr>
+                </thead>
+                <tbody id="schoolsListBody"></tbody>
+            </table>
         </div>
     </div>
 
-    <div class="footer-copyright no-print text-center mt-5 pt-3 border-top text-muted small">
-        © 2026 Bản quyền thuộc về <span id="fSchool">Trường học</span> - Phát triển bởi: <b>Trần Hồng Dân</b>
+    <div class="footer-copyright no-print">
+        © 2026 Bản quyền hệ thống Lịch Công Tác Giáo Dục<br>
+        Phát triển bởi: <b>Trần Hồng Dân</b>
     </div>
-</div>
-
-<div id="err" class="container mt-5 text-center" style="display:none;">
-    <h3 class="text-danger">THIẾU MÃ ĐỊNH DANH TRƯỜNG</h3>
-    <p>Vui lòng sử dụng link có mã trường. Ví dụ: <code>?school=tranphu1</code></p>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-    import { getDatabase, ref, set, push, onValue, remove, update } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+    import { getDatabase, ref, push, set, onValue, remove, update, get, child } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyBZ7HZoLwwIO5P42Ywy_E39bxQArDQaPMo",
         authDomain: "lichlamviec-f7b69.firebaseapp.com",
         databaseURL: "https://lichlamviec-f7b69-default-rtdb.asia-southeast1.firebasedatabase.app",
-        projectId: "lichlamviec-f7b69"
+        projectId: "lichlamviec-f7b69",
+        storageBucket: "lichlamviec-f7b69.firebasestorage.app",
+        messagingSenderId: "861156833276",
+        appId: "1:861156833276:web:04574ef63f4ce74e8b6479"
     };
 
-    const appObj = initializeApp(firebaseConfig);
-    const db = getDatabase(appObj);
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
 
-    const sId = new URLSearchParams(window.location.search).get('school');
-    let role = null;
+    // --- TRẠNG THÁI HỆ THỐNG ---
+    let currentUser = null; 
+    let currentRole = null; // 'root', 'school_admin', 'sub_account'
+    let currentSchoolId = 'root'; // 'root' hoặc mã trường (ví dụ: truongthptchuvanan)
+    let currentSchoolName = 'TRƯỜNG THPT SỐ 1 TRẦN PHÚ'; // Tên mặc định
 
-    if (!sId) {
-        document.getElementById('err').style.display = 'block';
-    } else {
-        document.getElementById('app').style.display = 'block';
-        init();
+    // --- HÀM TIỆN ÍCH ---
+    function removeVietnameseTones(str) {
+        str = str.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g,"a"); 
+        str = str.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g,"e"); 
+        str = str.replace(/ì|í|ị|ỉ|ĩ/g,"i"); 
+        str = str.replace(/ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ/g,"o"); 
+        str = str.replace(/ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ/g,"u"); 
+        str = str.replace(/ỳ|ý|ỵ|ỷ|ỹ/g,"y"); 
+        str = str.replace(/đ/g,"d");
+        str = str.replace(/À|Á|Ạ|Ả|Ã|Â|Ầ|Ấ|Ậ|Ẩ|Ẫ|Ă|Ằ|Ắ|Ặ|Ẳ|Ẵ/g, "A");
+        str = str.replace(/È|É|Ẹ|Ẻ|Ẽ|Ê|Ề|Ế|Ệ|Ể|Ễ/g, "E");
+        str = str.replace(/Ì|Í|Ị|Ỉ|Ĩ/g, "I");
+        str = str.replace(/Ò|Ó|Ọ|Ỏ|Õ|Ô|Ồ|Ố|Ộ|Ổ|Ỗ|Ơ|Ờ|Ớ|Ợ|Ở|Ỡ/g, "O");
+        str = str.replace(/Ù|Ú|Ụ|Ủ|Ũ|Ư|Ừ|Ứ|Ự|Ử|Ữ/g, "U");
+        str = str.replace(/Ỳ|Ý|Ỵ|Ỷ|Ỹ/g, "Y");
+        str = str.replace(/Đ/g, "D");
+        return str.toLowerCase().replace(/\s+/g, '');
     }
 
-    function init() {
-        onValue(ref(db, `schools/${sId}/config`), (s) => {
-            const c = s.val() || { name: "Cơ sở dữ liệu chưa thiết lập", prefix: "admin", pin: "0000" };
-            document.getElementById('schName').innerText = c.name.toUpperCase();
-            document.getElementById('fSchool').innerText = c.name;
-            document.getElementById('pPre').value = c.prefix;
-            document.getElementById('pPin').value = c.pin;
-        });
-        loadSchedule();
+    function getMondayOfCurrentWeek() {
+        const d = new Date();
+        const day = d.getDay();
+        const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+        const monday = new Date(d.setDate(diff));
+        return monday.toISOString().split('T')[0];
     }
 
-    // --- AUTHENTICATION ---
-    window.auth = function() {
-        const pw = prompt("Nhập mật khẩu quản trị:");
-        if (!pw) return;
-
-        if (pw === "000000") {
-            role = 'super'; showP();
+    // --- ĐỊNH TUYẾN DỮ LIỆU (QUAN TRỌNG) ---
+    // Hàm này quyết định đọc/ghi dữ liệu vào đâu dựa trên trường đang đăng nhập
+    function getDbPath(endpoint) {
+        if (currentSchoolId === 'root') {
+            return endpoint; // Giữ nguyên đường dẫn cũ cho trường gốc
         } else {
-            onValue(ref(db, `schools/${sId}/config`), (s) => {
-                const c = s.val();
-                if (c && (c.prefix + c.pin) === pw) { role = 'admin'; showP(); }
-                else {
-                    onValue(ref(db, `schools/${sId}/subAccounts`), snap => {
-                        let f = false; snap.forEach(u => { if(u.val().name + u.val().pin === pw) f = true; });
-                        if(f) { role = 'sub'; showP(); } else alert("Sai mật khẩu!");
-                    }, {onlyOnce: true});
+            return `schools_data/${currentSchoolId}/${endpoint}`; // Dữ liệu trường thành phần
+        }
+    }
+
+    // --- QUẢN LÝ ĐĂNG NHẬP (LOGIC MỚI) ---
+    window.toggleAdmin = function() {
+        const inputLogin = prompt("Nhập thông tin đăng nhập:\n- Admin Gốc: 123456\n- Admin Trường: [TênViếtLiền][MãBảoMật]\n- Tài khoản con: [Tên][Mã]");
+        if (!inputLogin) return;
+
+        // 1. Check Root Admin
+        if (inputLogin === "123456") {
+            setSession('root', 'root', 'ROOT ADMIN', 'TRƯỜNG THPT SỐ 1 TRẦN PHÚ');
+            return;
+        }
+
+        const dbRef = ref(db);
+        get(dbRef).then((snapshot) => {
+            let found = false;
+
+            // 2. Check Root Sub-accounts (Nhân viên trường gốc)
+            const rootSubs = snapshot.child('subAccounts').val();
+            if (rootSubs) {
+                for (const [key, val] of Object.entries(rootSubs)) {
+                    if (val.username + val.code === inputLogin) {
+                        setSession('root', 'sub_account', val.username, 'TRƯỜNG THPT SỐ 1 TRẦN PHÚ');
+                        found = true; break;
+                    }
                 }
-            }, {onlyOnce: true});
-        }
-    };
+            }
+            if (found) return;
 
-    function showP() {
-        document.getElementById('superAdminPanel').style.display = (role === 'super' ? 'block' : 'none');
-        document.getElementById('adminPanel').style.display = (role === 'admin' || role === 'sub' ? 'block' : 'none');
-        document.querySelectorAll('.is-admin').forEach(e => e.style.display = (role === 'admin' ? 'block' : 'none'));
-        document.getElementById('roleName').innerText = role.toUpperCase();
-        if(role === 'super') loadMaster();
-    }
+            // 3. Check School Registries (Admin các trường thành phần)
+            const schools = snapshot.child('schools_registry').val();
+            if (schools) {
+                for (const [key, val] of Object.entries(schools)) {
+                    if (val.username + val.password === inputLogin) {
+                        setSession(key, 'school_admin', 'ADMIN TRƯỜNG', val.name);
+                        found = true; break;
+                    }
+                }
+            }
+            if (found) return;
 
-    // --- SUPER ADMIN LOGIC ---
-    function loadMaster() {
-        onValue(ref(db, 'schools'), (snap) => {
-            let h = "";
-            snap.forEach(s => {
-                const c = s.val().config || {};
-                h += `<tr><td><b>${s.key}</b></td><td>${c.name||'N/A'}</td><td>${(c.prefix||'')+ (c.pin||'')}</td>
-                <td><button class="btn btn-xs btn-danger" onclick="delS('${s.key}')">Xóa</button></td></tr>`;
-            });
-            document.getElementById('masterSchoolList').innerHTML = h;
+            // 4. Check School Sub-accounts (Nhân viên các trường thành phần)
+            // Quét toàn bộ data các trường để tìm user con (Hơi nặng nhưng chấp nhận được cho quy mô nhỏ)
+            const schoolsData = snapshot.child('schools_data').val();
+            if (schoolsData) {
+                for (const [schId, schData] of Object.entries(schoolsData)) {
+                    if (schData.subAccounts) {
+                        for (const [subKey, subVal] of Object.entries(schData.subAccounts)) {
+                            if (subVal.username + subVal.code === inputLogin) {
+                                // Tìm thấy! Lấy tên trường từ registry
+                                const schoolName = schools[schId] ? schools[schId].name : "Trường Thành Phần";
+                                setSession(schId, 'sub_account', subVal.username, schoolName);
+                                found = true; break;
+                            }
+                        }
+                    }
+                    if (found) break;
+                }
+            }
+
+            if (!found) alert("Thông tin đăng nhập không chính xác!");
         });
-    }
-
-    window.createNewSchool = () => {
-        const id = document.getElementById('newSchId').value.trim().toLowerCase();
-        const name = document.getElementById('newSchName').value.trim();
-        const pre = document.getElementById('newPrefix').value.trim();
-        const pin = document.getElementById('newPin').value.trim();
-
-        if (id && name && pre && pin) {
-            set(ref(db, `schools/${id}/config`), { name, prefix: pre, pin }).then(() => {
-                const url = window.location.href.split('?')[0] + `?school=${id}`;
-                document.getElementById('resultBox').style.display = 'block';
-                document.getElementById('shareLink').value = `TRƯỜNG: ${name}\n- Link: ${url}\n- Mật khẩu Admin: ${pre + pin}`;
-            });
-        }
     };
 
-    window.delS = (id) => confirm(`Xóa toàn bộ CSDL của trường [${id}]?`) && remove(ref(db, `schools/${id}`));
-    window.copyLink = () => { document.getElementById('shareLink').select(); document.execCommand('copy'); alert("Đã sao chép!"); };
-
-    // --- SCHEDULE LOGIC ---
-    window.loadSchedule = (isU = false) => {
-        let vDate = document.getElementById('viewDate').value;
-        if(!vDate && !isU) {
-            let d = new Date(); let m = d.getDate() - d.getDay() + (d.getDay() === 0 ? -6 : 1);
-            vDate = new Date(d.setDate(m)).toISOString().split('T')[0];
-            document.getElementById('viewDate').value = vDate;
+    function setSession(schoolId, role, username, schoolName) {
+        currentUser = username;
+        currentRole = role;
+        currentSchoolId = schoolId;
+        currentSchoolName = schoolName;
+        
+        // Update UI
+        document.getElementById("headerSchoolName").innerText = schoolName;
+        if (schoolId !== 'root') {
+            document.getElementById("subSchoolName").innerText = schoolName;
+            document.getElementById("subSchoolName").style.display = "block";
+        } else {
+            document.getElementById("subSchoolName").style.display = "none";
         }
 
-        onValue(ref(db, `schools/${sId}/schedules`), (snap) => {
-            const data = []; snap.forEach(c => { let v = c.val(); v.key = c.key; data.push(v); });
-            let h = ""; let start = new Date(vDate);
-            const today = new Date().toISOString().split('T')[0];
+        showPanel();
+        loadSchedule(); // Reload lịch của trường tương ứng
+    }
 
-            for(let i=0; i<7; i++) {
+    function showPanel() {
+        document.getElementById("adminPanel").style.display = "block";
+        document.getElementById("userInfoDisplay").innerText = `User: ${currentUser} | ${currentSchoolName}`;
+        
+        let badgeText = "Thành Viên";
+        if (currentRole === 'root') badgeText = "QUẢN TRỊ VIÊN CẤP CAO";
+        if (currentRole === 'school_admin') badgeText = "QUẢN TRỊ TRƯỜNG";
+        document.getElementById("adminBadge").innerText = badgeText;
+
+        // Phân quyền hiển thị Tab
+        const isAdmin = (currentRole === 'root' || currentRole === 'school_admin');
+        const isRoot = (currentRole === 'root');
+
+        document.querySelectorAll('.admin-only').forEach(el => el.style.display = isAdmin ? 'block' : 'none');
+        document.querySelectorAll('.root-only').forEach(el => el.style.display = isRoot ? 'block' : 'none'); // Chỉ root thấy tab quản lý trường
+
+        switchTab('manual');
+        if (isRoot) loadSchoolsList(); // Nếu là root thì tải danh sách trường
+    }
+
+    window.logoutAdmin = () => { 
+        // Reset về mặc định
+        currentUser = null; currentRole = null; currentSchoolId = 'root'; 
+        currentSchoolName = 'TRƯỜNG THPT SỐ 1 TRẦN PHÚ';
+        
+        document.getElementById("adminPanel").style.display = "none";
+        document.getElementById("headerSchoolName").innerText = currentSchoolName;
+        document.getElementById("subSchoolName").style.display = "none";
+        
+        loadSchedule(); // Load lại lịch gốc
+    };
+
+    // --- LOGIC LỊCH (Đã cập nhật để dùng getDbPath) ---
+    window.loadSchedule = function(isUserSelected = false) {
+        let viewDateStr = document.getElementById("viewDate").value;
+        if (!viewDateStr && !isUserSelected) {
+            viewDateStr = getMondayOfCurrentWeek();
+            document.getElementById("viewDate").value = viewDateStr;
+        }
+
+        const filterDate = document.getElementById("filterListDate").value;
+        const todayStr = new Date().toISOString().split('T')[0];
+        
+        // Load General Task
+        onValue(ref(db, getDbPath('generalTask')), (s) => {
+            document.getElementById("displayGeneralTask").innerText = s.val() || "LỊCH TRƯỜNG " + currentSchoolName.toUpperCase();
+        });
+
+        // Load Schedules
+        onValue(ref(db, getDbPath('schedules')), (snapshot) => {
+            const allData = [];
+            snapshot.forEach(child => { let v = child.val(); v.key = child.key; allData.push(v); });
+
+            // Tab List
+            const listData = filterDate ? allData.filter(i => i.date === filterDate) : allData;
+            document.getElementById("manageTableBody").innerHTML = listData.sort((a,b) => new Date(a.date)-new Date(b.date)).map(item => `
+                <tr><td>${item.date}</td><td>${item.session}</td><td>${item.time||''}</td><td>${item.content}</td><td>${item.person||''}</td>
+                <td><button class="btn btn-xs btn-primary" onclick="editItem('${item.key}','${item.date}','${item.session}','${item.time}','${item.content}','${item.person}')">Sửa</button>
+                <button class="btn btn-xs btn-danger" onclick="deleteItem('${item.key}')">Xóa</button></td></tr>`).join("");
+
+            // Main Table
+            let html = "";
+            let start = new Date(viewDateStr);
+            for (let i = 0; i < 7; i++) {
                 let d = new Date(start); d.setDate(start.getDate() + i);
                 let dk = d.toISOString().split('T')[0];
-                let ts = data.filter(t => t.date === dk);
-                h += `<tr class="${dk === today ? 'today-highlight' : ''}">
-                    <td class="text-center fw-bold">${["CN","THỨ 2","THỨ 3","THỨ 4","THỨ 5","THỨ 6","THỨ 7"][d.getDay()]}</td>
-                    <td class="text-center">${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}</td>
-                    <td>${render(ts.filter(t => t.session === "Sáng"))}</td>
-                    <td>${render(ts.filter(t => t.session === "Chiều"))}</td></tr>`;
+                let df = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+                let tasks = allData.filter(t => t.date === dk);
+                html += `<tr class="${dk === todayStr ? 'today-highlight' : ''}">
+                    <td class="col-thu">${["Chủ Nhật","Thứ Hai","Thứ Ba","Thứ Tư","Thứ Năm","Thứ Sáu","Thứ Bảy"][d.getDay()]}</td>
+                    <td class="col-ngay">${df}</td>
+                    <td>${renderTasks(tasks.filter(t => t.session === "Sáng"))}</td>
+                    <td>${renderTasks(tasks.filter(t => t.session === "Chiều"))}</td></tr>`;
             }
-            document.getElementById('schBody').innerHTML = h;
+            document.getElementById("scheduleBody").innerHTML = html;
+            
+            let end = new Date(start); end.setDate(start.getDate()+6);
+            document.getElementById("scheduleDateRange").innerText = `(Từ ngày ${start.getDate()}/${start.getMonth()+1} đến ngày ${end.getDate()}/${end.getMonth()+1}/${end.getFullYear()})`;
+        });
+    };
 
-            if(role) {
-                document.getElementById('miniList').innerHTML = `<table class="table table-sm table-bordered mt-2">` + 
-                data.sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,15).map(i => `<tr><td>${i.date}</td><td>${i.content}</td><td><button class="btn btn-xs btn-primary" onclick="edit('${i.key}','${i.date}','${i.session}','${i.time}','${i.content}','${i.person}')">Sửa</button></td></tr>`).join("") + `</table>`;
+    function renderTasks(tasks) {
+        return tasks.sort((a,b) => (a.time||'99:99').localeCompare(b.time||'99:99')).map(t => `
+            <div class="task-item"><i class="fas fa-circle task-bullet"></i>
+            <div class="task-content-wrapper"><b>${t.time?t.time+':':''}</b> ${t.content} <i>${t.person?'('+t.person+')':''}</i></div></div>`).join("");
+    }
+
+    // --- CÁC HÀM THAO TÁC DATA (Dùng getDbPath) ---
+    window.switchTab = (n) => {
+        ['general','manual','excel','list','accounts','schools'].forEach(id => {
+            const el = document.getElementById('tab'+id.charAt(0).toUpperCase()+id.slice(1));
+            if(el) el.style.display = (id === n) ? 'block' : 'none';
+        });
+        document.querySelectorAll('#adminTabs .nav-link').forEach(l => l.classList.toggle('active', l.innerText.toLowerCase().includes(n === 'schools' ? 'quản lý trường' : (n === 'excel' ? 'excel' : (n === 'list' ? 'dữ liệu' : (n === 'accounts' ? 'tài khoản' : (n === 'general' ? 'chung' : 'nhập lịch')))))));
+    };
+    
+    // Quản lý Sub Accounts (Tài khoản con của trường hiện tại)
+    window.createSubAccount = () => {
+        const username = document.getElementById("accUsername").value.trim();
+        const code = document.getElementById("accCode").value.trim();
+        if(username && code.length === 4) { 
+            push(ref(db, getDbPath('subAccounts')), { username, code }); 
+            alert("Đã tạo tài khoản con cho trường hiện tại!"); 
+            document.getElementById("accUsername").value = '';
+            document.getElementById("accCode").value = '';
+        }
+    };
+
+    // Listener cho bảng tài khoản con
+    // Lưu ý: Cần update listener khi đổi trường, nhưng để đơn giản ta gọi lại onValue mỗi khi chuyển Tab Accounts hoặc loadSchedule
+    // Ở đây ta đặt listener động
+    function loadSubAccounts() {
+        onValue(ref(db, getDbPath('subAccounts')), (snap) => {
+            let h = "";
+            snap.forEach(c => { h += `<tr><td><b>${c.val().username}</b></td><td>${c.val().code}</td><td><button class="btn btn-xs btn-danger" onclick="removeAcc('${c.key}')">Xóa</button></td></tr>`; });
+            document.getElementById("accountTableBody").innerHTML = h;
+        });
+    }
+    // Gọi loadSubAccounts khi switchTab hoặc login xong. Để đơn giản ta gắn vào global scope, nó sẽ chạy realtime cho trường hiện tại
+    // Tuy nhiên do logic single page, ta sẽ gọi thủ công trong switchTab hoặc đơn giản là để nó chạy đè.
+    // Tạm thời fix cứng bằng cách gọi onValue mỗi lần loadSchedule (hơi dư thừa nhưng an toàn).
+    // Tối ưu: Đặt trong loadSchedule.
+
+    window.removeAcc = (key) => confirm("Xóa tài khoản này?") && remove(ref(db, getDbPath(`subAccounts/${key}`)));
+
+    window.addSchedule = () => { 
+        const data = { 
+            date: document.getElementById("inputDate").value, session: document.getElementById("inputSession").value,
+            time: document.getElementById("inputTime").value, content: document.getElementById("inputContent").value,
+            person: document.getElementById("inputPerson").value, creator: currentUser
+        };
+        const key = document.getElementById("editKey").value;
+        if(key) update(ref(db, getDbPath('schedules/'+key)), data).then(cancelEdit);
+        else push(ref(db, getDbPath('schedules')), data).then(cancelEdit);
+    };
+    window.cancelEdit = () => { document.getElementById("editKey").value = ""; document.getElementById("inputContent").value = ""; loadSchedule(); };
+    window.editItem = (k,d,s,t,c,p) => {
+        document.getElementById("editKey").value = k; document.getElementById("inputDate").value = d;
+        document.getElementById("inputSession").value = s; document.getElementById("inputTime").value = t;
+        document.getElementById("inputContent").value = c; document.getElementById("inputPerson").value = p;
+        switchTab('manual');
+    };
+    window.deleteItem = (k) => confirm("Xóa lịch này?") && remove(ref(db, getDbPath('schedules/'+k)));
+    window.saveGeneralTask = () => set(ref(db, getDbPath('generalTask')), document.getElementById("inputGeneralTask").value);
+
+    // --- CHỨC NĂNG QUẢN LÝ TRƯỜNG (CHỈ ROOT) ---
+    window.createNewSchool = () => {
+        if (currentRole !== 'root') return;
+        const name = document.getElementById("newSchoolName").value.trim();
+        const code = document.getElementById("newSchoolCode").value.trim();
+        
+        if (!name || code.length < 4) { alert("Vui lòng nhập tên trường và mã bảo mật (4 số)!"); return; }
+
+        const username = removeVietnameseTones(name); // Tạo user từ tên trường
+        // Kiểm tra xem username đã tồn tại chưa
+        get(ref(db, 'schools_registry/'+username)).then(snap => {
+            if (snap.exists()) {
+                alert("Trường này (hoặc mã tên đăng nhập này) đã tồn tại!");
+            } else {
+                const newSchoolData = {
+                    name: name,
+                    username: username,
+                    password: code,
+                    createdAt: new Date().toISOString()
+                };
+                set(ref(db, 'schools_registry/' + username), newSchoolData).then(() => {
+                    alert(`Đã tạo thành công!\nTrường: ${name}\nUser Admin: ${username}\nPass: ${code}`);
+                    document.getElementById("newSchoolName").value = '';
+                });
             }
         });
     };
 
-    function render(ts) { return ts.sort((a,b)=>(a.time||'').localeCompare(b.time||'')).map(t => `<div class="mb-2">• <b>${t.time?t.time+':':''}</b> ${t.content} <i>${t.person?'('+t.person+')':''}</i></div>`).join(""); }
+    function loadSchoolsList() {
+        onValue(ref(db, 'schools_registry'), (snap) => {
+            let html = "";
+            snap.forEach(c => {
+                const s = c.val();
+                html += `<tr>
+                    <td>${s.name}</td>
+                    <td class="fw-bold text-primary">${s.username}</td>
+                    <td>${s.password}</td>
+                    <td>${s.createdAt ? s.createdAt.split('T')[0] : ''}</td>
+                </tr>`;
+            });
+            document.getElementById("schoolsListBody").innerHTML = html;
+        });
+    }
 
-    // --- DATA ACTIONS ---
-    window.save = () => {
-        const d = { date: document.getElementById('iDate').value, session: document.getElementById('iSess').value, time: document.getElementById('iTime').value, person: document.getElementById('iPers').value, content: document.getElementById('iCont').value };
-        const k = document.getElementById('editKey').value;
-        if(k) update(ref(db, `schools/${sId}/schedules/${k}`), d).then(()=>document.getElementById('editKey').value="");
-        else push(ref(db, `schools/${sId}/schedules`), d);
-    };
-
-    window.edit = (k,d,s,t,c,p) => { document.getElementById('editKey').value=k; document.getElementById('iDate').value=d; document.getElementById('iSess').value=s; document.getElementById('iTime').value=t; document.getElementById('iCont').value=c; document.getElementById('iPers').value=p; window.scrollTo(0, 1000); };
-    window.saveG = () => set(ref(db, `schools/${sId}/generalTask`), document.getElementById('iGen').value);
-    onValue(ref(db, `schools/${sId}/generalTask`), s => {
-        document.getElementById('genTaskCell').innerText = s.val() || "LỊCH CÔNG TÁC TRƯỜNG";
-        document.getElementById('iGen').value = s.val() || "";
-    });
-
-    window.savePw = () => update(ref(db, `schools/${sId}/config`), { prefix: document.getElementById('pPre').value, pin: document.getElementById('pPin').value }).then(()=>alert("Đã đổi mật khẩu!"));
-    window.addSub = () => push(ref(db, `schools/${sId}/subAccounts`), { name: document.getElementById('subName').value, pin: document.getElementById('subPin').value });
-    onValue(ref(db, `schools/${sId}/subAccounts`), snap => {
-        let h = ""; snap.forEach(c => { h += `<div class="p-2 border-bottom d-flex justify-content-between">${c.val().name} (PIN: ${c.val().pin}) <button class="btn btn-xs btn-danger" onclick="delSub('${c.key}')">Xóa</button></div>`; });
-        document.getElementById('subAccList').innerHTML = h;
-    });
-    window.delSub = (k) => remove(ref(db, `schools/${sId}/subAccounts/${k}`));
-
-    window.tab = (id) => {
-        ['input','gen','acc','pw'].forEach(t => document.getElementById('tab'+t.charAt(0).toUpperCase()+t.slice(1)).style.display = (t===id?'block':'none'));
-        document.querySelectorAll('.nav-link').forEach(n => n.classList.toggle('active', n.innerText.toLowerCase().includes(id.substring(0,3))));
-    };
+    // Khởi tạo lần đầu (Load lịch root mặc định cho khách)
+    loadSchedule();
+    
+    // Hack nhỏ để loadSubAccount đúng context
+    const originalSwitchTab = window.switchTab;
+    window.switchTab = function(n) {
+        originalSwitchTab(n);
+        if (n === 'accounts') loadSubAccounts();
+    }
 </script>
 </body>
 </html>
